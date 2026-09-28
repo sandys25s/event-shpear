@@ -1,0 +1,238 @@
+{% extends "base.html" %}
+
+{% block title %}Create Event - EventOrg{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-9 animate-fade">
+        <div class="glass-card p-4 p-md-5">
+            <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom border-light border-opacity-10">
+                <div>
+                    <h2 class="fw-bold mb-1">Create <span class="text-gradient">New Event</span></h2>
+                    <p class="opacity-75 small mb-0">Fill in comprehensive details to publish or submit your event for campus approval.</p>
+                </div>
+                <a href="/organizer/dashboard" class="btn btn-outline-light btn-sm px-3 py-2">
+                    <i class="fas fa-arrow-left me-1"></i> Back
+                </a>
+            </div>
+
+            <form method="POST" id="createEventForm" novalidate>
+                <div class="row g-4">
+                    <!-- Event Title -->
+                    <div class="col-12">
+                        <label class="form-label small fw-semibold opacity-75">Event Title <span class="text-danger">*</span></label>
+                        <input type="text" name="title" id="title" class="form-control glass-input" placeholder="e.g. AI & Cloud Computing Summit 2026" required>
+                        <div class="invalid-feedback">Event title is required.</div>
+                    </div>
+
+                    <!-- Category & Max Participants -->
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold opacity-75">Category <span class="text-danger">*</span></label>
+                        <select name="category" class="form-select glass-input" required>
+                            {% for c in categories %}
+                            <option value="{{ c.name }}">{{ c.name }}</option>
+                            {% else %}
+                            <option value="Tech">Tech</option>
+                            <option value="Workshop">Workshop</option>
+                            <option value="Cultural">Cultural</option>
+                            <option value="Seminar">Seminar</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold opacity-75">Maximum Capacity <span class="text-danger">*</span></label>
+                        <input type="number" name="max_participants" id="max_participants" class="form-control glass-input" value="100" min="1" required>
+                        <div class="invalid-feedback">Capacity must be at least 1 attendee.</div>
+                    </div>
+
+                    <!-- Description -->
+                    <div class="col-12">
+                        <label class="form-label small fw-semibold opacity-75">Event Description <span class="text-danger">*</span></label>
+                        <textarea name="description" id="description" class="form-control glass-input" rows="4" placeholder="Detail the agenda, speakers, learning outcomes, and prerequisites..." required></textarea>
+                        <div class="invalid-feedback">Please provide a descriptive overview.</div>
+                    </div>
+
+                    <!-- Date & Times -->
+                    <div class="col-md-4">
+                        <label class="form-label small fw-semibold opacity-75">Event Date <span class="text-danger">*</span></label>
+                        <input type="date" name="date" id="date" class="form-control glass-input" required>
+                        <div class="invalid-feedback">Please select a valid event date.</div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label small fw-semibold opacity-75">Start Time <span class="text-danger">*</span></label>
+                        <input type="time" name="time" id="start_time" class="form-control glass-input" required>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label small fw-semibold opacity-75">End Time</label>
+                        <input type="time" name="end_time" id="end_time" class="form-control glass-input">
+                    </div>
+
+                    <!-- Registration Deadline -->
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold opacity-75">Registration Deadline <span class="text-danger">*</span></label>
+                        <input type="datetime-local" name="deadline" id="deadline" class="form-control glass-input" required>
+                        <div class="invalid-feedback">Registration deadline is required.</div>
+                    </div>
+
+                    <!-- Pricing Switch & Amount -->
+                    <div class="col-md-6">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <label class="form-label small fw-semibold opacity-75 mb-0">Event Fee Type</label>
+                            <div class="form-check form-switch mb-0">
+                                <input class="form-check-input" type="checkbox" name="is_paid" id="isPaidSwitch">
+                                <label class="form-check-label small" for="isPaidSwitch">Paid Event</label>
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <span class="input-group-text glass-input border-end-0 text-white">Rs.</span>
+                            <input type="number" step="0.01" min="0" name="price" id="priceInput" class="form-control glass-input border-start-0 ps-0" value="0.00" disabled>
+                        </div>
+                    </div>
+
+                    <!-- Location: Venue, Address, City -->
+                    <div class="col-md-4">
+                        <label class="form-label small fw-semibold opacity-75">Venue Name <span class="text-danger">*</span></label>
+                        <input type="text" name="venue" class="form-control glass-input" placeholder="e.g. Main Auditorium" required>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label small fw-semibold opacity-75">Address / Campus Block</label>
+                        <input type="text" name="address" class="form-control glass-input" placeholder="e.g. Academic Block 4">
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label small fw-semibold opacity-75">City / Campus</label>
+                        <input type="text" name="city" class="form-control glass-input" placeholder="e.g. Coimbatore, Chennai">
+                    </div>
+
+                    <!-- Contact Info -->
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold opacity-75">Contact Email</label>
+                        <input type="email" name="contact_email" class="form-control glass-input" value="{{ session.get('email', '') }}" placeholder="contact@eventorg.com">
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold opacity-75">Contact Phone</label>
+                        <input type="tel" name="contact_phone" class="form-control glass-input" placeholder="+91 98765 43210">
+                    </div>
+
+                    <!-- Requirements & Tags -->
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold opacity-75">Attendee Requirements</label>
+                        <input type="text" name="requirements" class="form-control glass-input" placeholder="e.g. Bring laptop with VS Code, College ID">
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold opacity-75">Tags (comma separated)</label>
+                        <input type="text" name="tags" class="form-control glass-input" placeholder="e.g. ai, coding, workshop, hackathon">
+                    </div>
+
+                    <!-- Banner Image URL & Live Preview -->
+                    <div class="col-12">
+                        <label class="form-label small fw-semibold opacity-75">Banner Image URL</label>
+                        <div class="input-group mb-2">
+                            <input type="url" name="image_url" id="imageUrlInput" class="form-control glass-input" placeholder="https://images.unsplash.com/photo-...">
+                            <button type="button" class="btn btn-glass" id="previewBtn">Preview</button>
+                        </div>
+                        <div id="imagePreviewContainer" class="p-2 border border-light border-opacity-10 rounded-3 text-center bg-black bg-opacity-25" style="display: none;">
+                            <img id="imagePreview" src="" alt="Banner Preview" class="img-fluid rounded-3" style="max-height: 220px; object-fit: cover;">
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="col-12 pt-3 border-top border-light border-opacity-10 d-flex flex-column flex-sm-row justify-content-end gap-3">
+                        <button type="submit" name="action" value="draft" class="btn btn-outline-light px-4 py-2">
+                            <i class="fas fa-save me-1"></i> Save as Draft
+                        </button>
+                        {% if session.get('role') == 'admin' %}
+                        <button type="submit" name="action" value="publish" class="btn btn-success px-4 py-2 fw-bold">
+                            <i class="fas fa-check-circle me-1"></i> Publish Directly (Admin)
+                        </button>
+                        {% else %}
+                        <button type="submit" name="action" value="submit" class="btn btn-primary px-4 py-2 fw-bold shadow-sm">
+                            <i class="fas fa-paper-plane me-1"></i> Submit for Admin Approval
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const isPaidSwitch = document.getElementById('isPaidSwitch');
+    const priceInput = document.getElementById('priceInput');
+    const imageUrlInput = document.getElementById('imageUrlInput');
+    const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+    const imagePreview = document.getElementById('imagePreview');
+    const previewBtn = document.getElementById('previewBtn');
+    const form = document.getElementById('createEventForm');
+
+    // Toggle Price field
+    isPaidSwitch.addEventListener('change', () => {
+        if (isPaidSwitch.checked) {
+            priceInput.removeAttribute('disabled');
+            if (parseFloat(priceInput.value) <= 0) priceInput.value = '199.00';
+            priceInput.focus();
+        } else {
+            priceInput.setAttribute('disabled', 'disabled');
+            priceInput.value = '0.00';
+        }
+    });
+
+    // Image Preview
+    function updatePreview() {
+        const url = imageUrlInput.value.trim();
+        if (url) {
+            imagePreview.src = url;
+            imagePreviewContainer.style.display = 'block';
+            imagePreview.onerror = () => {
+                imagePreview.src = '/static/placeholder.png';
+            };
+        } else {
+            imagePreviewContainer.style.display = 'none';
+        }
+    }
+    imageUrlInput.addEventListener('change', updatePreview);
+    previewBtn.addEventListener('click', updatePreview);
+
+    // Form Validation
+    form.addEventListener('submit', (e) => {
+        const dateInput = document.getElementById('date');
+        const deadlineInput = document.getElementById('deadline');
+        const maxPart = document.getElementById('max_participants');
+
+        if (!form.checkValidity()) {
+            e.preventDefault();
+            e.stopPropagation();
+            form.classList.add('was-validated');
+            return;
+        }
+
+        if (parseInt(maxPart.value) < 1) {
+            alert('Maximum capacity must be at least 1 attendee.');
+            e.preventDefault();
+            return;
+        }
+
+        // Validate deadline is before event date
+        if (dateInput.value && deadlineInput.value) {
+            const eventDate = new Date(dateInput.value);
+            const deadlineDate = new Date(deadlineInput.value);
+            if (deadlineDate > eventDate) {
+                alert('Registration deadline cannot be after the event date.');
+                e.preventDefault();
+                return;
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+
+{% block title %}Select Seats - {{ event.title }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center animate-fade">
+    <div class="col-lg-10">
+        <div class="glass-card p-5">
+            <div class="text-center mb-5">
+                <h2 class="fw-bold">Select Your <span class="text-gradient">Seats</span></h2>
+                <p class="opacity-75">{{ event.title }}</p>
+                <div class="d-inline-block px-5 py-2 mt-2 border border-secondary rounded-pill bg-white bg-opacity-10 shadow-sm">
+                    <span class="fw-bold text-uppercase tracking-widest">Stage / Screen</span>
+                </div>
+            </div>
+
+            <div class="seat-map d-flex flex-column align-items-center gap-4 mb-5 overflow-auto pb-3" style="min-height: 400px;">
+                
+                <!-- Diamond Section -->
+                <div class="text-center w-100">
+                    <p class="small fw-bold text-warning mb-2 border-bottom border-warning border-opacity-25 pb-2 d-inline-block px-5">DIAMOND</p>
+                    <div class="d-flex flex-column gap-2 align-items-center mt-2">
+                        {% for row in ['A', 'B'] %}
+                        <div class="d-flex gap-2 align-items-center">
+                            <span class="me-3 fw-bold opacity-50" style="width: 20px;">{{ row }}</span>
+                            <div class="d-flex gap-1 justify-content-center">
+                                {% for i in range(1, 15) %}
+                                <div class="seat diamond-seat d-flex align-items-center justify-content-center small" data-seat="{{ row }}{{ i }}">{{ "%02d"|format(i) }}</div>
+                                {% if i == 7 %}<div class="mx-3"></div>{% endif %} <!-- Aisle -->
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Platinum Section -->
+                <div class="text-center w-100 mt-4">
+                    <p class="small fw-bold text-info mb-2 border-bottom border-info border-opacity-25 pb-2 d-inline-block px-5">PLATINUM</p>
+                    <div class="d-flex flex-column gap-2 align-items-center mt-2">
+                        {% for row in ['C', 'D', 'E', 'F'] %}
+                        <div class="d-flex gap-2 align-items-center">
+                            <span class="me-3 fw-bold opacity-50" style="width: 20px;">{{ row }}</span>
+                            <div class="d-flex gap-1 justify-content-center">
+                                {% for i in range(1, 15) %}
+                                <div class="seat platinum-seat d-flex align-items-center justify-content-center small" data-seat="{{ row }}{{ i }}">{{ "%02d"|format(i) }}</div>
+                                {% if i == 7 %}<div class="mx-3"></div>{% endif %} <!-- Aisle -->
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Gold Section -->
+                <div class="text-center w-100 mt-4">
+                    <p class="small fw-bold text-primary mb-2 border-bottom border-primary border-opacity-25 pb-2 d-inline-block px-5">GOLD</p>
+                    <div class="d-flex flex-column gap-2 align-items-center mt-2">
+                        {% for row in ['G', 'H', 'I', 'J', 'K'] %}
+                        <div class="d-flex gap-2 align-items-center">
+                            <span class="me-3 fw-bold opacity-50" style="width: 20px;">{{ row }}</span>
+                            <div class="d-flex gap-1 justify-content-center">
+                                {% for i in range(1, 15) %}
+                                <div class="seat gold-seat d-flex align-items-center justify-content-center small" data-seat="{{ row }}{{ i }}">{{ "%02d"|format(i) }}</div>
+                                {% if i == 7 %}<div class="mx-3"></div>{% endif %} <!-- Aisle -->
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Legend and Summary -->
+            <div class="row align-items-center bg-white bg-opacity-10 p-4 rounded-4">
+                <div class="col-md-6 mb-4 mb-md-0 d-flex gap-4">
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="seat" style="cursor: default;"></div>
+                        <span class="small opacity-75">Available</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="seat selected" style="cursor: default;"></div>
+                        <span class="small opacity-75">Selected</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="seat booked" style="cursor: default;"></div>
+                        <span class="small opacity-75">Booked</span>
+                    </div>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p class="mb-1">Selected Seats: <span id="selected-count" class="fw-bold text-gradient">0</span></p>
+                    <p class="mb-3 opacity-75 small" id="selected-seats-list">None</p>
+                    
+                    <form action="/register_event/{{ event.event_id }}" method="POST" id="booking-form">
+                        <input type="hidden" name="selected_seats" id="selected-seats-input">
+                        <button type="submit" class="btn btn-glass px-5 py-2 fw-bold" id="proceed-btn" disabled>
+                            Proceed to {{ "Payment" if event.is_paid else "Registration" }} <i class="fas fa-arrow-right ms-2"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<style>
+    .seat {
+        width: 32px;
+        height: 32px;
+        border: 2px solid rgba(255, 255, 255, 0.5);
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        background: transparent;
+        font-size: 10px;
+        color: rgba(255, 255, 255, 0.7);
+    }
+    
+    .seat:hover:not(.booked) {
+        transform: scale(1.1);
+        border-color: #fff;
+        background: rgba(255, 255, 255, 0.2);
+        color: #fff;
+    }
+    
+    .seat.selected {
+        background: #a29bfe;
+        border-color: #a29bfe;
+        box-shadow: 0 0 10px rgba(162, 155, 254, 0.6);
+    }
+    
+    .seat.booked {
+        background: rgba(255, 255, 255, 0.2);
+        border-color: rgba(255, 255, 255, 0.1);
+        cursor: not-allowed;
+        opacity: 0.5;
+    }
+
+    .diamond-seat:hover:not(.booked) { border-color: #f1c40f; }
+    .diamond-seat.selected { background: #f1c40f; border-color: #f1c40f; box-shadow: 0 0 10px rgba(241, 196, 15, 0.6); }
+
+    .platinum-seat:hover:not(.booked) { border-color: #00cec9; }
+    .platinum-seat.selected { background: #00cec9; border-color: #00cec9; box-shadow: 0 0 10px rgba(0, 206, 201, 0.6); }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const seats = document.querySelectorAll('.seat:not(.booked)');
+        const selectedCountEl = document.getElementById('selected-count');
+        const selectedListEl = document.getElementById('selected-seats-list');
+        const proceedBtn = document.getElementById('proceed-btn');
+        const inputHidden = document.getElementById('selected-seats-input');
+        
+        let selectedSeats = [];
+
+        // Randomly assign some booked seats for realism (Mock)
+        document.querySelectorAll('.seat').forEach(seat => {
+            if(Math.random() < 0.3) {
+                seat.classList.add('booked');
+            }
+        });
+
+        seats.forEach(seat => {
+            seat.addEventListener('click', () => {
+                if(seat.classList.contains('booked')) return;
+                
+                seat.classList.toggle('selected');
+                const seatId = seat.getAttribute('data-seat');
+                
+                if(seat.classList.contains('selected')) {
+                    selectedSeats.push(seatId);
+                } else {
+                    selectedSeats = selectedSeats.filter(id => id !== seatId);
+                }
+                
+                updateSelection();
+            });
+        });
+
+        function updateSelection() {
+            selectedCountEl.innerText = selectedSeats.length;
+            selectedListEl.innerText = selectedSeats.length > 0 ? selectedSeats.join(', ') : 'None';
+            inputHidden.value = selectedSeats.join(',');
+            
+            if(selectedSeats.length > 0) {
+                proceedBtn.removeAttribute('disabled');
+            } else {
+                proceedBtn.setAttribute('disabled', 'true');
+            }
+        }
+    });
+</script>
+{% endblock %}

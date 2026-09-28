@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}Notifications - EventOrg{% endblock %}
+
+{% block content %}
+<div class="row mb-4 align-items-center animate-fade">
+    <div class="col-md-7">
+        <h2 class="fw-bold mb-1">
+            <i class="fas fa-bell text-warning me-2"></i>In-App <span class="text-gradient">Notifications</span>
+        </h2>
+        <p class="opacity-75 mb-0">Updates on your ticket issuances, event approvals, cancellations, and waitlist movements.</p>
+    </div>
+    <div class="col-md-5 text-md-end mt-3 mt-md-0 d-flex justify-content-md-end gap-2">
+        <a href="/user/dashboard" class="btn btn-outline-light btn-sm px-3 py-2">
+            <i class="fas fa-arrow-left me-1"></i> Dashboard
+        </a>
+        {% if notifications %}
+        <form action="/notifications/mark-all-read" method="POST">
+            <button type="submit" class="btn btn-primary btn-sm px-3 py-2 fw-semibold">
+                <i class="fas fa-check-double me-1"></i> Mark All as Read
+            </button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row justify-content-center animate-fade">
+    <div class="col-lg-10">
+        <div class="glass-card p-4">
+            <div class="d-flex flex-column gap-3">
+                {% for n in notifications %}
+                <div class="p-4 rounded-4 {{ 'bg-white bg-opacity-10 border border-primary border-opacity-50' if not n.is_read else 'bg-white bg-opacity-5 border border-light border-opacity-10' }} d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3">
+                    <div class="d-flex align-items-start gap-3">
+                        <div class="p-3 rounded-circle {{ 'bg-primary' if n.type == 'info' else ('bg-success' if n.type == 'success' else ('bg-warning text-dark' if n.type == 'warning' else 'bg-danger')) }} bg-opacity-25 text-white">
+                            {% if n.type == 'success' %}<i class="fas fa-check-circle fa-lg"></i>
+                            {% elif n.type == 'warning' %}<i class="fas fa-exclamation-triangle fa-lg"></i>
+                            {% elif n.type == 'danger' %}<i class="fas fa-times-circle fa-lg"></i>
+                            {% else %}<i class="fas fa-info-circle fa-lg"></i>{% endif %}
+                        </div>
+                        <div>
+                            <div class="d-flex align-items-center gap-2 mb-1">
+                                <h6 class="fw-bold text-white mb-0">{{ n.title or 'EventOrg Notice' }}</h6>
+                                {% if not n.is_read %}
+                                <span class="badge bg-primary rounded-pill small">New</span>
+                                {% endif %}
+                            </div>
+                            <p class="small opacity-75 mb-2">{{ n.message }}</p>
+                            <span class="x-small opacity-50">{{ n.created_at }}</span>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center gap-2 ms-auto ms-sm-0">
+                        {% if n.link %}
+                        <a href="{{ n.link }}" class="btn btn-sm btn-glass px-3 py-1">View</a>
+                        {% endif %}
+                        {% if not n.is_read %}
+                        <form action="/notifications/mark-read/{{ n.notification_id }}" method="POST">
+                            <button type="submit" class="btn btn-sm btn-outline-light px-2 py-1" title="Mark as read">
+                                <i class="fas fa-check"></i>
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+                {% else %}
+                <div class="text-center py-5 opacity-50">
+                    <i class="fas fa-bell-slash fa-4x mb-3 text-secondary opacity-50 d-block"></i>
+                    <h5 class="fw-bold mb-1">No Notifications Yet</h5>
+                    <p class="small mb-0">You're all caught up! Updates regarding events and tickets will appear here.</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block title %}Attendees - {{ event.title }}{% endblock %}
+
+{% block content %}
+<div class="row mb-4 align-items-center animate-fade">
+    <div class="col-md-7">
+        <h2 class="fw-bold mb-1">
+            <i class="fas fa-users text-primary me-2"></i>Event <span class="text-gradient">Attendees</span>
+        </h2>
+        <p class="opacity-75 mb-0">Managing registrations for: <strong>{{ event.title }}</strong></p>
+    </div>
+    <div class="col-md-5 text-md-end mt-3 mt-md-0 d-flex flex-wrap justify-content-md-end gap-2">
+        {% if is_admin %}
+        <a href="/admin/dashboard" class="btn btn-outline-light btn-sm px-3 py-2">Control Panel</a>
+        {% else %}
+        <a href="/organizer/dashboard" class="btn btn-outline-light btn-sm px-3 py-2">Organizer Dashboard</a>
+        {% endif %}
+        <a href="/organizer/checkin/{{ event.event_id }}" class="btn btn-glass btn-sm px-3 py-2">
+            <i class="fas fa-qrcode me-1 text-warning"></i> Check-in Scanner
+        </a>
+        <a href="/organizer/event/{{ event.event_id }}/export-attendees.csv" class="btn btn-primary btn-sm px-3 py-2 fw-semibold">
+            <i class="fas fa-file-csv me-1"></i> Export Attendee CSV
+        </a>
+    </div>
+</div>
+
+<div class="glass-card p-4 animate-fade">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+        <div>
+            <h5 class="fw-bold mb-1">Registered Participants ({{ participants|length }} / {{ event.max_participants }})</h5>
+            <span class="small opacity-50">Filter, inspect ticket barcodes, or verify attendance timestamps.</span>
+        </div>
+        <div style="max-width: 250px;">
+            <input type="text" id="participantSearch" class="form-control glass-input form-control-sm" placeholder="Search attendees...">
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-dark table-hover align-middle mb-0" id="participantsTable">
+            <thead>
+                <tr class="opacity-50 small text-uppercase">
+                    <th>Attendee</th>
+                    <th>Email</th>
+                    <th>Ticket Code</th>
+                    <th>Reg. Date</th>
+                    <th>Status</th>
+                    <th>Payment</th>
+                    <th>Check-in Time</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in participants %}
+                <tr>
+                    <td>
+                        <strong class="text-white d-block">{{ p.name }}</strong>
+                        <span class="x-small opacity-50">Reg ID #{{ p.registration_id }}</span>
+                    </td>
+                    <td>{{ p.email }}</td>
+                    <td>
+                        {% if p.ticket_code %}
+                        <a href="/ticket/{{ p.ticket_code }}" target="_blank" class="badge bg-white bg-opacity-10 border border-light border-opacity-25 text-white text-decoration-none px-2 py-1 font-monospace">
+                            <i class="fas fa-ticket-alt me-1 text-warning"></i>{{ p.ticket_code }}
+                        </a>
+                        {% else %}
+                        <span class="small opacity-50">N/A</span>
+                        {% endif %}
+                    </td>
+                    <td class="small opacity-75">{{ p.registration_date[:16] if p.registration_date else 'N/A' }}</td>
+                    <td>
+                        {% if p.status == 'ATTENDED' %}
+                            <span class="badge bg-success rounded-pill px-2 py-1"><i class="fas fa-check-double me-1"></i>Attended</span>
+                        {% elif p.status == 'CONFIRMED' %}
+                            <span class="badge bg-primary rounded-pill px-2 py-1">Confirmed</span>
+                        {% elif p.status == 'WAITLISTED' %}
+                            <span class="badge bg-warning text-dark rounded-pill px-2 py-1">Waitlisted</span>
+                        {% elif p.status == 'CANCELLED' %}
+                            <span class="badge bg-danger rounded-pill px-2 py-1">Cancelled</span>
+                        {% else %}
+                            <span class="badge bg-secondary rounded-pill px-2 py-1">{{ p.status }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="small fw-semibold text-{{ 'success' if p.payment_status == 'paid' else 'warning' }}">
+                            {{ p.payment_status|capitalize }}
+                        </span>
+                    </td>
+                    <td class="small opacity-75 font-monospace">
+                        {{ p.checked_in_at or '-' }}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" class="text-center py-5 opacity-50">
+                        <i class="fas fa-users-slash fa-3x mb-3 text-secondary opacity-50 d-block"></i>
+                        No attendees registered for this event yet.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const searchInput = document.getElementById('participantSearch');
+    if (searchInput) {
+        searchInput.addEventListener('input', () => {
+            const q = searchInput.value.toLowerCase();
+            const rows = document.querySelectorAll('#participantsTable tbody tr');
+            rows.forEach(r => {
+                r.style.display = r.innerText.toLowerCase().includes(q) ? '' : 'none';
+            });
+        });
+    }
+});
+</script>
+{% endblock %}

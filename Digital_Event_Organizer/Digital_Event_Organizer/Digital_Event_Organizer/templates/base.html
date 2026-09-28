@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Digital Event Organizer - EventOrg{% endblock %}</title>
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- Chart.js for Admin & Analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    {% block head %}{% endblock %}
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark glass-nav sticky-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="/">
+                <i class="fas fa-bolt text-warning"></i>
+                <span><span class="text-gradient">EVENT</span>ORG</span>
+            </a>
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto ms-lg-3">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/"><i class="fas fa-home me-1 opacity-50"></i> Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/events"><i class="fas fa-compass me-1 opacity-50"></i> Explore Events</a>
+                    </li>
+
+                    {% if session.get('user_id') %}
+                        {% if session.get('role') == 'admin' %}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle text-warning" href="#" role="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-shield-alt me-1"></i> Admin Panel
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-dark glass-card border-0 p-2 shadow-lg">
+                                <li><a class="dropdown-item rounded-2" href="/admin/dashboard"><i class="fas fa-tachometer-alt me-2 text-primary"></i> Control Panel</a></li>
+                                <li><a class="dropdown-item rounded-2" href="/admin/approvals"><i class="fas fa-clipboard-check me-2 text-warning"></i> Event Approvals</a></li>
+                                <li><a class="dropdown-item rounded-2" href="/admin/users"><i class="fas fa-users-cog me-2 text-info"></i> User Management</a></li>
+                                <li><a class="dropdown-item rounded-2" href="/admin/analytics"><i class="fas fa-chart-line me-2 text-success"></i> Platform Analytics</a></li>
+                                <li><a class="dropdown-item rounded-2" href="/admin/categories"><i class="fas fa-tags me-2 text-secondary"></i> Categories</a></li>
+                                <li><hr class="dropdown-divider opacity-25"></li>
+                                <li><a class="dropdown-item rounded-2" href="/admin/create_event"><i class="fas fa-plus-circle me-2 text-warning"></i> Create Event</a></li>
+                                <li><a class="dropdown-item rounded-2" href="/organizer/checkin"><i class="fas fa-qrcode me-2 text-primary"></i> QR Ticket Check-In</a></li>
+                            </ul>
+                        </li>
+                        {% endif %}
+
+                        {% if session.get('role') == 'organizer' %}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle text-info" href="#" role="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-briefcase me-1"></i> Organizer
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-dark glass-card border-0 p-2 shadow-lg">
+                                <li><a class="dropdown-item rounded-2" href="/organizer/dashboard"><i class="fas fa-th-large me-2 text-info"></i> Organizer Dashboard</a></li>
+                                <li><a class="dropdown-item rounded-2" href="/organizer/create_event"><i class="fas fa-calendar-plus me-2 text-success"></i> Create New Event</a></li>
+                                <li><a class="dropdown-item rounded-2" href="/organizer/checkin"><i class="fas fa-qrcode me-2 text-warning"></i> Scan Ticket Check-In</a></li>
+                            </ul>
+                        </li>
+                        {% endif %}
+
+                        <li class="nav-item">
+                            <a class="nav-link" href="/dashboard"><i class="fas fa-user-circle me-1 opacity-50"></i> Dashboard</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/user/tickets"><i class="fas fa-ticket-alt me-1 opacity-50"></i> My Tickets</a>
+                        </li>
+                    {% endif %}
+                </ul>
+
+                <ul class="navbar-nav ms-auto align-items-lg-center gap-2">
+                    {% if session.get('user_id') %}
+                        <!-- Notifications Bell -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link position-relative px-3" href="/notifications" title="Notifications">
+                                <i class="fas fa-bell fa-lg"></i>
+                                {% if unread_notifications_count and unread_notifications_count > 0 %}
+                                <span class="position-absolute top-1 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.65rem;">
+                                    {{ unread_notifications_count }}
+                                </span>
+                                {% endif %}
+                            </a>
+                        </li>
+
+                        <!-- User Profile Info -->
+                        <li class="nav-item d-none d-lg-block">
+                            <span class="badge bg-white bg-opacity-10 px-3 py-2 rounded-pill small border border-light border-opacity-25">
+                                <i class="fas fa-circle text-success me-1" style="font-size: 8px;"></i>
+                                {{ session.get('name', 'User') }}
+                                <span class="text-gradient ms-1">({{ session.get('role', 'attendee')|capitalize }})</span>
+                            </span>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link btn-glass px-3 py-1 text-danger-hover" href="/logout">
+                                <i class="fas fa-sign-out-alt me-1"></i> Logout
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link px-3" href="/login">Login</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="btn btn-glass px-4 py-2" href="/register">Join Now</a>
+                        </li>
+                    {% endif %}
+
+                    <!-- Theme Toggle -->
+                    <li class="nav-item ms-lg-2">
+                        <button id="theme-toggle" class="btn btn-sm btn-outline-light rounded-circle d-flex align-items-center justify-content-center" style="width: 36px; height: 36px;" title="Toggle Dark/Light Mode">
+                            <i class="fas fa-sun"></i>
+                        </button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container py-4">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages-container mb-4">
+                {% for category, message in messages %}
+                    {% set alert_class = 'primary' %}
+                    {% if category == 'error' or category == 'danger' %}
+                        {% set alert_class = 'danger' %}
+                    {% elif category == 'success' %}
+                        {% set alert_class = 'success' %}
+                    {% elif category == 'warning' %}
+                        {% set alert_class = 'warning' %}
+                    {% elif category == 'info' %}
+                        {% set alert_class = 'info' %}
+                    {% endif %}
+                    <div class="alert alert-{{ alert_class }} glass-card text-white border-0 d-flex justify-content-between align-items-center shadow-sm mb-2" role="alert">
+                        <div>
+                            {% if category == 'success' %}<i class="fas fa-check-circle me-2 text-success"></i>
+                            {% elif category in ['error', 'danger'] %}<i class="fas fa-exclamation-triangle me-2 text-danger"></i>
+                            {% elif category == 'warning' %}<i class="fas fa-exclamation-circle me-2 text-warning"></i>
+                            {% else %}<i class="fas fa-info-circle me-2 text-info"></i>{% endif %}
+                            <span>{{ message }}</span>
+                        </div>
+                        <button type="button" class="btn-close btn-close-white ms-3" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- AI Assistant -->
+    <div id="ai-assistant" class="position-fixed bottom-0 end-0 m-4 z-3" style="width: 350px; display: none;">
+        <div class="glass-card shadow-lg overflow-hidden d-flex flex-column" style="height: 450px;">
+            <div class="p-3 bg-primary bg-opacity-25 d-flex justify-content-between align-items-center border-bottom border-light border-opacity-25">
+                <h6 class="mb-0 fw-bold"><i class="fas fa-robot text-info me-2"></i>Event AI Assistant</h6>
+                <button class="btn btn-sm text-white" onclick="document.getElementById('ai-assistant').style.display='none'; document.getElementById('ai-trigger').style.display='flex';"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="flex-grow-1 p-3 overflow-y-auto d-flex flex-column gap-2" id="ai-messages">
+                <div class="bg-white bg-opacity-10 p-2 rounded-3 align-self-start" style="max-width: 85%;">
+                    <p class="small mb-0">Hi! I'm your Event Assistant. Need help managing events, finding tickets, or exploring categories?</p>
+                </div>
+            </div>
+            <div class="p-3 border-top border-light border-opacity-25">
+                <form id="ai-form" class="d-flex gap-2">
+                    <input type="text" class="form-control glass-input form-control-sm" placeholder="Ask me anything..." required>
+                    <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-paper-plane"></i></button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <button id="ai-trigger" class="btn btn-primary rounded-circle position-fixed bottom-0 end-0 m-4 shadow-lg z-3 d-flex justify-content-center align-items-center" style="width: 55px; height: 55px; transition: transform 0.3s;" onclick="document.getElementById('ai-assistant').style.display='block'; this.style.display='none';" title="Ask AI Assistant">
+        <i class="fas fa-comment-dots fa-xl"></i>
+    </button>
+
+    <footer class="py-4 mt-5 text-center border-top border-light border-opacity-10">
+        <div class="container">
+            <p class="text-white-50 small mb-1">&copy; {{ current_year }} EventOrg Platform. Modern Production Event Management.</p>
+            <div class="d-flex justify-content-center gap-3 opacity-50 small">
+                <a href="/events" class="text-decoration-none text-white">All Events</a>
+                <span>&bull;</span>
+                <a href="/register" class="text-decoration-none text-white">Become an Organizer</a>
+                <span>&bull;</span>
+                <a href="/dashboard" class="text-decoration-none text-white">User Portal</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

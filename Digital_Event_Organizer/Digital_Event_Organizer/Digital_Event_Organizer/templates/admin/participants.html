@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}Participants - {{ event_title }}{% endblock %}
+
+{% block content %}
+<div class="row mb-5 animate-fade">
+    <div class="col-md-8">
+        <h2 class="fw-bold">Participants: <span class="text-gradient">{{ event_title }}</span></h2>
+        <p class="opacity-50">Viewing list of all registered users for this event.</p>
+    </div>
+    <div class="col-md-4 text-md-end">
+        <a href="/admin/dashboard" class="btn btn-outline-light btn-sm px-4">Back to Dashboard</a>
+    </div>
+</div>
+
+<div class="glass-card p-4 animate-fade">
+    <div class="table-responsive">
+        <table class="table table-dark table-hover mb-0">
+            <thead>
+                <tr class="opacity-50">
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Reg. Date</th>
+                    <th>Status</th>
+                    <th>Payment</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in participants %}
+                <tr>
+                    <td>{{ p.name }}</td>
+                    <td>{{ p.email }}</td>
+                    <td>{{ p.registration_date }}</td>
+                    <td><span class="badge bg-{{ 'success' if p.status == 'confirmed' else 'warning' }} rounded-pill">{{
+                            p.status }}</span></td>
+                    <td><span class="text-{{ 'success' if p.payment_status == 'paid' else 'danger' }}">{{
+                            p.payment_status.capitalize() }}</span></td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" class="text-center py-4 opacity-50">No participants registered yet.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

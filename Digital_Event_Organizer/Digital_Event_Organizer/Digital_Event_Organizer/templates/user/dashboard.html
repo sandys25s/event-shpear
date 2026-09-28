@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+
+{% block title %}My Dashboard - EventOrg{% endblock %}
+
+{% block content %}
+<div class="row mb-4 align-items-center animate-fade">
+    <div class="col-md-7">
+        <h2 class="fw-bold mb-1">
+            Welcome back, <span class="text-gradient">{{ session.get('name') }}</span>!
+        </h2>
+        <p class="opacity-75 mb-0">Track your registered events, access digital tickets, and monitor waitlist status.</p>
+    </div>
+    <div class="col-md-5 text-md-end mt-3 mt-md-0 d-flex flex-wrap justify-content-md-end gap-2">
+        <a href="/events" class="btn btn-outline-light btn-sm px-3 py-2">
+            <i class="fas fa-search me-1"></i> Explore Events
+        </a>
+        <a href="/user/tickets" class="btn btn-primary btn-sm px-3 py-2 fw-semibold">
+            <i class="fas fa-ticket-alt me-1"></i> My Digital Tickets
+        </a>
+    </div>
+</div>
+
+<div class="row g-4 mb-5">
+    <!-- Active Registrations & Tickets Column -->
+    <div class="col-lg-8 animate-fade">
+        <!-- Confirmed Upcoming Events -->
+        <div class="glass-card p-4 mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold mb-0"><i class="fas fa-calendar-check text-primary me-2"></i>My Registrations</h5>
+                <span class="badge bg-primary bg-opacity-25 text-white px-3 py-1 rounded-pill small">
+                    {{ registrations|length }} Active
+                </span>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-dark table-hover align-middle mb-0">
+                    <thead>
+                        <tr class="opacity-50 small text-uppercase">
+                            <th>Event</th>
+                            <th>Date & Time</th>
+                            <th>Status</th>
+                            <th>Payment</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for reg in registrations %}
+                        <tr>
+                            <td>
+                                <strong class="text-white d-block">{{ reg.title }}</strong>
+                                <span class="small opacity-50"><i class="fas fa-map-marker-alt me-1"></i>{{ reg.venue }}</span>
+                            </td>
+                            <td>
+                                <span class="d-block small fw-semibold">{{ reg.date }}</span>
+                                <span class="small opacity-50">{{ reg.time }}</span>
+                            </td>
+                            <td>
+                                {% if reg.status == 'ATTENDED' %}
+                                    <span class="badge bg-success rounded-pill px-2 py-1"><i class="fas fa-check-double me-1"></i>Attended</span>
+                                {% elif reg.status == 'CONFIRMED' %}
+                                    <span class="badge bg-primary rounded-pill px-2 py-1">Confirmed</span>
+                                {% elif reg.status == 'WAITLISTED' %}
+                                    <span class="badge bg-warning text-dark rounded-pill px-2 py-1">Waitlisted</span>
+                                {% else %}
+                                    <span class="badge bg-secondary rounded-pill px-2 py-1">{{ reg.status }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="small fw-semibold text-{{ 'success' if reg.payment_status == 'paid' else 'warning' }}">
+                                    {{ reg.payment_status|capitalize }}
+                                </span>
+                            </td>
+                            <td class="text-end">
+                                <div class="d-flex justify-content-end gap-2">
+                                    {% if reg.ticket_code %}
+                                    <a href="/ticket/{{ reg.ticket_code }}" class="btn btn-sm btn-glass px-2 py-1" title="Open QR Ticket">
+                                        <i class="fas fa-qrcode me-1 text-warning"></i> Ticket
+                                    </a>
+                                    {% endif %}
+                                    <a href="/event/{{ reg.event_id }}" class="btn btn-sm btn-outline-light px-2 py-1" title="View Event">
+                                        <i class="fas fa-info-circle"></i>
+                                    </a>
+                                    <form action="/cancel_registration/{{ reg.registration_id }}" method="POST" onsubmit="return confirm('Cancel this registration? This cannot be undone.');" class="d-inline">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger px-2 py-1" title="Cancel Booking">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="5" class="text-center py-5 opacity-50">
+                                <i class="fas fa-ticket-alt fa-3x mb-3 text-secondary opacity-50 d-block"></i>
+                                You have not registered for any upcoming events yet.
+                                <div class="mt-2">
+                                    <a href="/events" class="btn btn-glass btn-sm">Explore Events Now</a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Waitlisted Events Panel (Requirement 6 & 10) -->
+        {% if waitlisted %}
+        <div class="glass-card p-4 mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold mb-0 text-warning"><i class="fas fa-hourglass-half me-2"></i>Waitlisted Events</h5>
+                <span class="badge bg-warning bg-opacity-25 text-warning px-3 py-1 rounded-pill small">
+                    {{ waitlisted|length }} in Queue
+                </span>
+            </div>
+            <p class="small opacity-50 mb-3">You will be automatically promoted to Confirmed if an attendee cancels.</p>
+
+            <div class="list-group list-group-flush bg-transparent">
+                {% for w in waitlisted %}
+                <div class="list-group-item bg-transparent text-white px-0 py-3 border-light border-opacity-10 d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong class="d-block">{{ w.title }}</strong>
+                        <span class="small opacity-50"><i class="fas fa-calendar me-1"></i>{{ w.date }} at {{ w.time }} &bull; {{ w.venue }}</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge bg-warning text-dark rounded-pill px-3 py-1 small">Waitlist Priority</span>
+                        <form action="/cancel_registration/{{ w.registration_id }}" method="POST" onsubmit="return confirm('Leave waitlist?');">
+                            <button type="submit" class="btn btn-sm btn-outline-danger">Leave</button>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Past Attended Events Panel (Requirement 14 & 10) -->
+        {% if past_events %}
+        <div class="glass-card p-4">
+            <h5 class="fw-bold mb-3"><i class="fas fa-history text-info me-2"></i>Past Attended Events</h5>
+            <div class="row g-3">
+                {% for pe in past_events %}
+                <div class="col-md-6">
+                    <div class="p-3 rounded-4 bg-white bg-opacity-5 border border-light border-opacity-10 h-100 d-flex flex-column justify-content-between">
+                        <div>
+                            <strong class="d-block text-white mb-1">{{ pe.title }}</strong>
+                            <span class="small opacity-50 d-block mb-2">{{ pe.date }} &bull; {{ pe.venue }}</span>
+                            {% if pe.user_rating %}
+                            <span class="badge bg-warning bg-opacity-25 text-warning rounded-pill small">
+                                Rated: {{ pe.user_rating }} / 5 ⭐
+                            </span>
+                            {% endif %}
+                        </div>
+                        <div class="mt-3 pt-2 border-top border-light border-opacity-10 d-flex justify-content-between align-items-center">
+                            <a href="/event/{{ pe.event_id }}" class="small text-white opacity-75 text-decoration-none">
+                                View Details &rarr;
+                            </a>
+                            {% if not pe.user_rating and pe.status == 'ATTENDED' %}
+                            <a href="/event/{{ pe.event_id }}" class="btn btn-sm btn-outline-warning py-0 px-2 small">
+                                Leave Review
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Notifications & Calendar Sidebar Column -->
+    <div class="col-lg-4 animate-fade" style="animation-delay: 0.1s;">
+        <div class="glass-card p-4 h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold mb-0"><i class="fas fa-bell text-warning me-2"></i>Notifications</h5>
+                {% if notifications %}
+                <form action="/notifications/mark-all-read" method="POST" class="d-inline">
+                    <button type="submit" class="btn btn-sm btn-glass px-2 py-1 small">Mark All Read</button>
+                </form>
+                {% endif %}
+            </div>
+
+            <div class="notification-list" style="max-height: 480px; overflow-y: auto;">
+                {% for note in notifications %}
+                <div class="p-3 mb-3 rounded-4 {{ 'bg-white bg-opacity-10 border border-primary border-opacity-25' if not note.is_read else 'bg-white bg-opacity-5' }}"
+                     style="border-left: 4px solid var(--primary-color) !important;">
+                    {% if note.title %}
+                    <h6 class="fw-bold mb-1 small text-white">{{ note.title }}</h6>
+                    {% endif %}
+                    <p class="small mb-1 opacity-75">{{ note.message }}</p>
+                    <div class="d-flex justify-content-between align-items-center mt-2">
+                        <span class="x-small opacity-50">{{ note.created_at[:16] if note.created_at else '' }}</span>
+                        {% if note.link %}
+                        <a href="{{ note.link }}" class="x-small text-gradient fw-bold text-decoration-none">View Details &rarr;</a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% else %}
+                <div class="text-center py-5 opacity-50">
+                    <i class="fas fa-bell-slash fa-2x mb-2 d-block"></i>
+                    <p class="small mb-0">No new notifications.</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

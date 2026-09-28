@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Event - Admin{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8 animate-fade">
+        <div class="glass-card p-5">
+            <h2 class="fw-bold mb-5">Edit <span class="text-gradient">Event</span></h2>
+
+            <form method="POST">
+                <div class="row g-4">
+                    <div class="col-12">
+                        <label class="form-label small opacity-75">Event Title</label>
+                        <input type="text" name="title" class="form-control glass-input" value="{{ event.title }}"
+                            required>
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label small opacity-75">Description</label>
+                        <textarea name="description" class="form-control glass-input" rows="4"
+                            required>{{ event.description }}</textarea>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label small opacity-75">Date</label>
+                        <input type="date" name="date" class="form-control glass-input" value="{{ event.date }}"
+                            required>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label small opacity-75">Time</label>
+                        <input type="time" name="time" class="form-control glass-input" value="{{ event.time }}"
+                            required>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label small opacity-75">Venue</label>
+                        <input type="text" name="venue" class="form-control glass-input" value="{{ event.venue }}"
+                            required>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label small opacity-75">Category</label>
+                        <select name="category" class="form-select glass-input">
+                            <option value="Workshop" {{ 'selected' if event.category=='Workshop' }}>Workshop</option>
+                            <option value="Seminar" {{ 'selected' if event.category=='Seminar' }}>Seminar</option>
+                            <option value="Cultural" {{ 'selected' if event.category=='Cultural' }}>Cultural</option>
+                            <option value="Sports" {{ 'selected' if event.category=='Sports' }}>Sports</option>
+                            <option value="Tech" {{ 'selected' if event.category=='Tech' }}>Tech</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label small opacity-75">Max Participants</label>
+                        <input type="number" name="max_participants" class="form-control glass-input"
+                            value="{{ event.max_participants }}" required>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label small opacity-75">Price (Rs)</label>
+                        <input type="number" step="0.01" name="price" class="form-control glass-input"
+                            value="{{ event.price }}">
+                    </div>
+
+                    <div class="col-md-4 d-flex align-items-end pb-2">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" name="is_paid" id="isPaidSwitch"
+                                {{ 'checked' if event.is_paid }}>
+                            <label class="form-check-label small opacity-75" for="isPaidSwitch">Is this a paid
+                                event?</label>
+                        </div>
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label small opacity-75">Registration Deadline</label>
+                        <input type="datetime-local" name="deadline" class="form-control glass-input"
+                            value="{{ event.deadline }}" required>
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label small opacity-75">Image URL (Optional)</label>
+                        <input type="url" name="image_url" class="form-control glass-input"
+                            value="{{ event.image_url }}">
+                    </div>
+
+                    <div class="col-12 mt-5">
+                        <button type="submit" class="btn btn-glass w-100 py-3 fw-bold">Update Event</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const isPaidSwitch = document.getElementById('isPaidSwitch');
+        const priceInput = document.querySelector('input[name="price"]');
+        
+        function togglePrice() {
+            if(isPaidSwitch.checked) {
+                priceInput.removeAttribute('disabled');
+                priceInput.parentElement.style.opacity = '1';
+            } else {
+                priceInput.setAttribute('disabled', 'true');
+                priceInput.value = '0.00';
+                priceInput.parentElement.style.opacity = '0.5';
+            }
+        }
+        
+        isPaidSwitch.addEventListener('change', togglePrice);
+        togglePrice(); // init
+    });
+</script>
+{% endblock %}

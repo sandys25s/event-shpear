@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+
+{% block title %}Platform Analytics - EventOrg Admin{% endblock %}
+
+{% block content %}
+<div class="row mb-4 align-items-center animate-fade">
+    <div class="col-md-7">
+        <h2 class="fw-bold mb-1">
+            <i class="fas fa-chart-line text-success me-2"></i>Platform <span class="text-gradient">Analytics</span>
+        </h2>
+        <p class="opacity-75 mb-0">Deep dive into registration velocities, attendance ratios, and category performance.</p>
+    </div>
+    <div class="col-md-5 text-md-end mt-3 mt-md-0 d-flex flex-wrap justify-content-md-end gap-2">
+        <a href="/admin/dashboard" class="btn btn-outline-light btn-sm px-3 py-2">
+            <i class="fas fa-arrow-left me-1"></i> Control Panel
+        </a>
+        <div class="dropdown">
+            <button class="btn btn-primary btn-sm dropdown-toggle px-3 py-2 fw-semibold" type="button" data-bs-toggle="dropdown">
+                <i class="fas fa-file-export me-1"></i> Export Data
+            </button>
+            <ul class="dropdown-menu dropdown-menu-dark glass-card border-0 p-2 shadow-lg">
+                <li><a class="dropdown-item rounded-2" href="/admin/export/events.csv">Events CSV</a></li>
+                <li><a class="dropdown-item rounded-2" href="/admin/export/users.csv">Users CSV</a></li>
+                <li><a class="dropdown-item rounded-2" href="/admin/export/registrations.csv">Registrations CSV</a></li>
+                <li><a class="dropdown-item rounded-2" href="/admin/export/attendance.csv">Attendance CSV</a></li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- Primary KPIs -->
+<div class="row g-4 mb-4 animate-fade">
+    <div class="col-6 col-md-4 col-lg-2">
+        <div class="glass-card p-3 text-center">
+            <span class="small opacity-50 d-block mb-1">Total Events</span>
+            <h3 class="fw-bold mb-0 text-gradient">{{ kpis.total_events }}</h3>
+        </div>
+    </div>
+    <div class="col-6 col-md-4 col-lg-2">
+        <div class="glass-card p-3 text-center">
+            <span class="small opacity-50 d-block mb-1">Users</span>
+            <h3 class="fw-bold mb-0 text-gradient">{{ kpis.total_users }}</h3>
+        </div>
+    </div>
+    <div class="col-6 col-md-4 col-lg-2">
+        <div class="glass-card p-3 text-center">
+            <span class="small opacity-50 d-block mb-1">Registrations</span>
+            <h3 class="fw-bold mb-0 text-warning">{{ kpis.total_registrations }}</h3>
+        </div>
+    </div>
+    <div class="col-6 col-md-4 col-lg-2">
+        <div class="glass-card p-3 text-center">
+            <span class="small opacity-50 d-block mb-1">Attendance</span>
+            <h3 class="fw-bold mb-0 text-info">{{ kpis.total_attendance }}</h3>
+        </div>
+    </div>
+    <div class="col-6 col-md-4 col-lg-2">
+        <div class="glass-card p-3 text-center">
+            <span class="small opacity-50 d-block mb-1">Turnout %</span>
+            <h3 class="fw-bold mb-0 text-success">{{ kpis.attendance_rate }}%</h3>
+        </div>
+    </div>
+    <div class="col-6 col-md-4 col-lg-2">
+        <div class="glass-card p-3 text-center">
+            <span class="small opacity-50 d-block mb-1">Live Database</span>
+            <h3 class="fw-bold mb-0 text-primary"><i class="fas fa-database"></i></h3>
+        </div>
+    </div>
+</div>
+
+<!-- Analytical Charts Grid -->
+<div class="row g-4 mb-4 animate-fade">
+    <!-- Events by Category -->
+    <div class="col-lg-6">
+        <div class="glass-card p-4 h-100">
+            <h5 class="fw-bold mb-1"><i class="fas fa-layer-group text-primary me-2"></i>Events by Category</h5>
+            <p class="small opacity-50 mb-3">Volume of events created under each campus category.</p>
+            <div style="height: 280px; position: relative;">
+                <canvas id="categoryBarChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Event Status Distribution -->
+    <div class="col-lg-6">
+        <div class="glass-card p-4 h-100">
+            <h5 class="fw-bold mb-1"><i class="fas fa-pie-chart text-info me-2"></i>Event Status Distribution</h5>
+            <p class="small opacity-50 mb-3">Breakdown of Draft, Pending, Published, Completed, and Cancelled events.</p>
+            <div style="height: 280px; position: relative;">
+                <canvas id="statusPieChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Registrations Timeline -->
+    <div class="col-12">
+        <div class="glass-card p-4">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+                <h5 class="fw-bold mb-0"><i class="fas fa-chart-area text-warning me-2"></i>Registration Velocity (14-Day Timeline)</h5>
+                <span class="badge bg-warning bg-opacity-25 text-warning rounded-pill px-3 py-1 small">Real-time DB</span>
+            </div>
+            <p class="small opacity-50 mb-4">Attendee booking volume processed over time.</p>
+            <div style="height: 300px; position: relative;">
+                <canvas id="regTimelineChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    fetch('/api/admin/analytics-data')
+        .then(res => res.json())
+        .then(data => {
+            // Category Bar Chart
+            const catCtx = document.getElementById('categoryBarChart');
+            if (catCtx) {
+                new Chart(catCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: Object.keys(data.categories || {}),
+                        datasets: [{
+                            label: 'Events',
+                            data: Object.values(data.categories || {}),
+                            backgroundColor: '#6c5ce7',
+                            borderRadius: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: { beginAtZero: true, ticks: { color: 'rgba(255,255,255,0.7)', precision: 0 }, grid: { color: 'rgba(255,255,255,0.08)' } },
+                            x: { ticks: { color: 'rgba(255,255,255,0.7)' }, grid: { display: false } }
+                        },
+                        plugins: { legend: { display: false } }
+                    }
+                });
+            }
+
+            // Status Pie Chart
+            const statusCtx = document.getElementById('statusPieChart');
+            if (statusCtx) {
+                new Chart(statusCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: Object.keys(data.statuses || {}),
+                        datasets: [{
+                            data: Object.values(data.statuses || {}),
+                            backgroundColor: ['#00b894', '#fdcb6e', '#636e72', '#d63031', '#0984e3', '#e17055'],
+                            borderWidth: 2,
+                            borderColor: 'rgba(255,255,255,0.1)'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'right', labels: { color: '#ffffff', font: { family: 'Outfit' } } }
+                        }
+                    }
+                });
+            }
+
+            // Timeline Area Chart
+            const timeCtx = document.getElementById('regTimelineChart');
+            if (timeCtx) {
+                const timeline = data.timeline || {};
+                new Chart(timeCtx, {
+                    type: 'line',
+                    data: {
+                        labels: Object.keys(timeline),
+                        datasets: [{
+                            label: 'Registrations',
+                            data: Object.values(timeline),
+                            borderColor: '#fdcb6e',
+                            backgroundColor: 'rgba(253, 203, 110, 0.2)',
+                            fill: true,
+                            tension: 0.35,
+                            pointBackgroundColor: '#ffffff',
+                            pointRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: { beginAtZero: true, ticks: { color: 'rgba(255,255,255,0.7)', precision: 0 }, grid: { color: 'rgba(255,255,255,0.08)' } },
+                            x: { ticks: { color: 'rgba(255,255,255,0.7)' }, grid: { color: 'rgba(255,255,255,0.08)' } }
+                        },
+                        plugins: { legend: { display: false } }
+                    }
+                });
+            }
+        })
+        .catch(err => console.error('Analytics load error:', err));
+});
+</script>
+{% endblock %}

@@ -1,0 +1,163 @@
+:root {
+    --glass-bg: rgba(255, 255, 255, 0.1);
+    --glass-border: rgba(255, 255, 255, 0.2);
+    --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+    --primary-color: #6c5ce7;
+    --secondary-color: #a29bfe;
+    --text-color: #ffffff;
+    --bg-gradient: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+}
+
+body {
+    background: var(--bg-gradient);
+    background-attachment: fixed;
+    color: var(--text-color);
+    font-family: 'Outfit', sans-serif;
+    min-height: 100vh;
+    margin: 0;
+    overflow-x: hidden;
+}
+
+.glass-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: 20px;
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.glass-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.5);
+}
+
+.glass-nav {
+    background: rgba(15, 12, 41, 0.7);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.btn-glass {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    color: white;
+    backdrop-filter: blur(5px);
+    border-radius: 12px;
+    padding: 10px 25px;
+    transition: all 0.3s ease;
+}
+
+.btn-glass:hover {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    color: white;
+    transform: scale(1.05);
+}
+
+.glass-input {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--glass-border);
+    border-radius: 10px;
+    color: white;
+    padding: 12px;
+}
+
+.glass-input:focus {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: var(--secondary-color);
+    box-shadow: none;
+    color: white;
+}
+
+h1,
+h2,
+h3 {
+    font-weight: 700;
+    letter-spacing: -0.5px;
+}
+
+.text-gradient {
+    background: linear-gradient(to right, #ffffff, #a29bfe);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-fade {
+    animation: fadeIn 0.8s ease forwards;
+}
+
+.glass-input option {
+    background-color: #302b63;
+    color: white;
+}
+
+
+body.light-mode {
+    --glass-bg: rgba(255, 255, 255, 0.4);
+    --glass-border: rgba(255, 255, 255, 0.5);
+    --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+    --primary-color: #6c5ce7;
+    --secondary-color: #a29bfe;
+    --text-color: #2d3436;
+    --bg-gradient: linear-gradient(135deg, #fdfbfb, #ebedee);
+}
+
+body.light-mode .text-gradient {
+    background: linear-gradient(to right, #6c5ce7, #0984e3);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+body.light-mode .glass-nav {
+    background: rgba(255, 255, 255, 0.7);
+}
+
+body.light-mode .btn-glass {
+    color: #2d3436;
+}
+
+body.light-mode .btn-glass:hover {
+    color: white;
+}
+
+body.light-mode .glass-input {
+    color: #2d3436;
+    background: rgba(255, 255, 255, 0.5);
+}
+
+body.light-mode .glass-input:focus {
+    color: #2d3436;
+    background: rgba(255, 255, 255, 0.8);
+}
+
+body.light-mode .glass-input option {
+    background-color: #fdfbfb;
+    color: #2d3436;
+}
+
+body.light-mode .text-white {
+    color: #2d3436 !important;
+}
+
+body.light-mode .table-dark {
+    --bs-table-bg: transparent;
+    --bs-table-color: #2d3436;
+    --bs-table-border-color: rgba(0,0,0,0.1);
+}

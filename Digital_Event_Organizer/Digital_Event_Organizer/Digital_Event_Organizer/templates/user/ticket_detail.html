@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+
+{% block title %}Ticket {{ ticket.ticket_code }} - {{ ticket.title }}{% endblock %}
+
+{% block head %}
+<style>
+@media print {
+    body { background: #ffffff !important; color: #000000 !important; }
+    .glass-nav, footer, .no-print, #ai-assistant, #ai-trigger { display: none !important; }
+    .ticket-container { box-shadow: none !important; border: 2px dashed #000000 !important; background: #ffffff !important; color: #000000 !important; }
+    .text-gradient { -webkit-text-fill-color: initial !important; color: #000000 !important; }
+    .ticket-header { background: #eeeeee !important; color: #000000 !important; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center animate-fade">
+    <div class="col-md-8 col-lg-6">
+        <div class="d-flex justify-content-between align-items-center mb-3 no-print">
+            <a href="/user/tickets" class="btn btn-outline-light btn-sm px-3 py-2">
+                <i class="fas fa-arrow-left me-1"></i> My Tickets
+            </a>
+            <button onclick="window.print()" class="btn btn-glass btn-sm px-3 py-2 fw-semibold">
+                <i class="fas fa-print me-1"></i> Print / Save PDF
+            </button>
+        </div>
+
+        <!-- Digital Ticket Card -->
+        <div class="glass-card ticket-container overflow-hidden shadow-lg border border-light border-opacity-25" style="border-radius: 24px;">
+            <!-- Ticket Top Header -->
+            <div class="p-4 bg-primary bg-opacity-25 ticket-header border-bottom border-light border-opacity-15 position-relative">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="fw-bold tracking-widest text-uppercase small text-gradient">
+                        <i class="fas fa-bolt text-warning me-1"></i> EVENTORG PASS
+                    </span>
+                    {% if ticket.registration_status == 'ATTENDED' %}
+                        <span class="badge bg-success rounded-pill px-3 py-1"><i class="fas fa-check-double me-1"></i>Checked In</span>
+                    {% elif ticket.registration_status == 'CONFIRMED' %}
+                        <span class="badge bg-primary rounded-pill px-3 py-1">Valid Admission</span>
+                    {% else %}
+                        <span class="badge bg-secondary rounded-pill px-3 py-1">{{ ticket.registration_status }}</span>
+                    {% endif %}
+                </div>
+                <h3 class="fw-bold text-white mb-0">{{ ticket.title }}</h3>
+            </div>
+
+            <!-- Ticket Core Details -->
+            <div class="p-4 p-md-5">
+                <div class="row g-3 mb-4">
+                    <div class="col-6">
+                        <span class="small opacity-50 d-block text-uppercase">Attendee Name</span>
+                        <strong class="text-white fs-6">{{ ticket.attendee_name }}</strong>
+                    </div>
+                    <div class="col-6 text-end">
+                        <span class="small opacity-50 d-block text-uppercase">Ticket Code</span>
+                        <span class="font-monospace fw-bold text-warning fs-6">{{ ticket.ticket_code }}</span>
+                    </div>
+                    <div class="col-6">
+                        <span class="small opacity-50 d-block text-uppercase">Date</span>
+                        <strong class="text-white">{{ ticket.date }}</strong>
+                    </div>
+                    <div class="col-6 text-end">
+                        <span class="small opacity-50 d-block text-uppercase">Time</span>
+                        <strong class="text-white">{{ ticket.time }}{{ (' - ' + ticket.end_time) if ticket.end_time else '' }}</strong>
+                    </div>
+                    <div class="col-12">
+                        <span class="small opacity-50 d-block text-uppercase">Venue</span>
+                        <strong class="text-white">{{ ticket.venue }}</strong>
+                        {% if ticket.address %}<span class="small opacity-75 d-block">{{ ticket.address }}</span>{% endif %}
+                        {% if ticket.city %}<span class="small opacity-75 d-block">{{ ticket.city }}</span>{% endif %}
+                    </div>
+                </div>
+
+                <!-- Perforated Line Decoration -->
+                <div class="position-relative my-4">
+                    <hr style="border-top: 2px dashed rgba(255,255,255,0.2);">
+                </div>
+
+                <!-- QR Code Box -->
+                <div class="text-center">
+                    <div class="p-3 rounded-4 bg-white d-inline-block shadow mb-3" style="width: 200px; height: 200px;">
+                        <img src="{{ ticket.qr_path or ('/static/uploads/qrcodes/' + ticket.ticket_code + '.png') }}"
+                             onerror="this.onerror=null; this.src='https://api.qrserver.com/v1/create-qr-code/?size=180x180&data={{ ticket.ticket_code }}';"
+                             alt="Scan QR" class="img-fluid" style="width: 100%; height: 100%; object-fit: contain;">
+                    </div>
+                    <span class="font-monospace small d-block opacity-75 text-uppercase fw-semibold">{{ ticket.ticket_code }}</span>
+                    <span class="x-small opacity-50 d-block mt-1">Present this digital ticket at entry for QR verification.</span>
+                </div>
+            </div>
+
+            <!-- Ticket Footer -->
+            <div class="p-3 bg-white bg-opacity-5 border-top border-light border-opacity-10 text-center small opacity-50">
+                Issued by EventOrg &bull; Verified Entry Pass
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}Login - Digital Event Organizer{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center align-items-center min-vh-75">
+    <div class="col-md-5 animate-fade">
+        <div class="glass-card p-5">
+            <div class="text-center mb-5">
+                <h2 class="fw-bold">Welcome <span class="text-gradient">Back</span></h2>
+                <p class="opacity-50">Please enter your credentials to login</p>
+            </div>
+
+            <form method="POST">
+                <div class="mb-4">
+                    <label class="form-label small opacity-75">Email Address</label>
+                    <input type="email" name="email" class="form-control glass-input" placeholder="name@example.com"
+                        required>
+                </div>
+                <div class="mb-5">
+                    <label class="form-label small opacity-75">Password</label>
+                    <input type="password" name="password" class="form-control glass-input" placeholder="••••••••"
+                        required>
+                </div>
+
+                <button type="submit" class="btn btn-glass w-100 py-3 mb-4">Sign In</button>
+
+                <p class="text-center small opacity-50 mb-0">
+                    Don't have an account? <a href="/register" class="text-white text-decoration-none fw-bold">Register
+                        here</a>
+                </p>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

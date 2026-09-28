@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Event - {{ event.title }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-9 animate-fade">
+        <div class="glass-card p-4 p-md-5">
+            <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom border-light border-opacity-10">
+                <div>
+                    <h2 class="fw-bold mb-1">Edit <span class="text-gradient">Event</span></h2>
+                    <p class="opacity-75 small mb-0">Update event logistics, schedule, or pricing.</p>
+                </div>
+                <a href="/organizer/dashboard" class="btn btn-outline-light btn-sm px-3 py-2">
+                    <i class="fas fa-arrow-left me-1"></i> Back
+                </a>
+            </div>
+
+            {% if event.rejection_reason %}
+            <div class="alert alert-danger glass-card border-0 mb-4 p-3">
+                <h6 class="fw-bold mb-1"><i class="fas fa-exclamation-triangle me-2"></i>Admin Feedback on Previous Submission:</h6>
+                <p class="mb-0 small">{{ event.rejection_reason }}</p>
+            </div>
+            {% endif %}
+
+            <form method="POST" id="editEventForm" novalidate>
+                <div class="row g-4">
+                    <!-- Event Title -->
+                    <div class="col-12">
+                        <label class="form-label small fw-semibold opacity-75">Event Title <span class="text-danger">*</span></label>
+                        <input type="text" name="title" class="form-control glass-input" value="{{ event.title }}" required>
+                    </div>
+
+                    <!-- Category & Max Participants -->
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold opacity-75">Category <span class="text-danger">*</span></label>
+                        <select name="category" class="form-select glass-input" required>
+                            {% for c in categories %}
+                            <option value="{{ c.name }}" {{ 'selected' if event.category == c.name else '' }}>{{ c.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold opacity-75">Maximum Capacity <span class="text-danger">*</span></label>
+                        <input type="number" name="max_participants" class="form-control glass-input" value="{{ event.max_participants }}" min="{{ event.current_participants }}" required>
+                        <div class="form-text opacity-50 small">Cannot be less than current participants ({{ event.current_participants }}).</div>
+                    </div>
+
+                    <!-- Description -->
+                    <div class="col-12">
+                        <label class="form-label small fw-semibold opacity-75">Event Description <span class="text-danger">*</span></label>
+                        <textarea name="description" class="form-control glass-input" rows="4" required>{{ event.description }}</textarea>
+                    </div>
+
+                    <!-- Date & Times -->
+                    <div class="col-md-4">
+                        <label class="form-label small fw-semibold opacity-75">Event Date <span class="text-danger">*</span></label>
+                        <input type="date" name="date" class="form-control glass-input" value="{{ event.date }}" required>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label small fw-semibold opacity-75">Start Time <span class="text-danger">*</span></label>
+                        <input type="time" name="time" class="form-control glass-input" value="{{ event.time }}" required>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label small fw-semibold opacity-75">End Time</label>
+                        <input type="time" name="end_time" class="form-control glass-input" value="{{ event.end_time or '' }}">
+                    </div>
+
+                    <!-- Registration Deadline -->
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold opacity-75">Registration Deadline <span class="text-danger">*</span></label>
+                        <input type="text" name="deadline" class="form-control glass-input" value="{{ event.deadline }}" required>
+                        <div class="form-text opacity-50 small">Format: YYYY-MM-DD HH:MM:SS</div>
+                    </div>
+
+                    <!-- Pricing Switch & Amount -->
+                    <div class="col-md-6">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <label class="form-label small fw-semibold opacity-75 mb-0">Event Fee Type</label>
+                            <div class="form-check form-switch mb-0">
+                                <input class="form-check-input" type="checkbox" name="is_paid" id="isPaidSwitch" {{ 'checked' if event.is_paid else '' }}>
+                                <label class="form-check-label small" for="isPaidSwitch">Paid Event</label>
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <span class="input-group-text glass-input border-end-0 text-white">Rs.</span>
+                            <input type="number" step="0.01" min="0" name="price" id="priceInput" class="form-control glass-input border-start-0 ps-0" value="{{ event.price }}" {{ '' if event.is_paid else 'disabled' }}>
+                        </div>
+                    </div>
+
+                    <!-- Location: Venue, Address, City -->
+                    <div class="col-md-4">
+                        <label class="form-label small fw-semibold opacity-75">Venue Name <span class="text-danger">*</span></label>
+                        <input type="text" name="venue" class="form-control glass-input" value="{{ event.venue }}" required>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label small fw-semibold opacity-75">Address / Campus Block</label>
+                        <input type="text" name="address" class="form-control glass-input" value="{{ event.address or '' }}">
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label small fw-semibold opacity-75">City / Campus</label>
+                        <input type="text" name="city" class="form-control glass-input" value="{{ event.city or '' }}">
+                    </div>
+
+                    <!-- Contact Info -->
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold opacity-75">Contact Email</label>
+                        <input type="email" name="contact_email" class="form-control glass-input" value="{{ event.contact_email or '' }}">
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold opacity-75">Contact Phone</label>
+                        <input type="tel" name="contact_phone" class="form-control glass-input" value="{{ event.contact_phone or '' }}">
+                    </div>
+
+                    <!-- Requirements & Tags -->
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold opacity-75">Attendee Requirements</label>
+                        <input type="text" name="requirements" class="form-control glass-input" value="{{ event.requirements or '' }}">
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold opacity-75">Tags</label>
+                        <input type="text" name="tags" class="form-control glass-input" value="{{ event.tags or '' }}">
+                    </div>
+
+                    <!-- Banner Image URL -->
+                    <div class="col-12">
+                        <label class="form-label small fw-semibold opacity-75">Banner Image URL</label>
+                        <div class="input-group mb-2">
+                            <input type="url" name="image_url" id="imageUrlInput" class="form-control glass-input" value="{{ event.image_url or '' }}">
+                            <button type="button" class="btn btn-glass" id="previewBtn">Preview</button>
+                        </div>
+                        <div id="imagePreviewContainer" class="p-2 border border-light border-opacity-10 rounded-3 text-center bg-black bg-opacity-25" style="{{ '' if event.image_url else 'display: none;' }}">
+                            <img id="imagePreview" src="{{ event.image_url or '' }}" alt="Banner Preview" class="img-fluid rounded-3" style="max-height: 220px; object-fit: cover;">
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="col-12 pt-3 border-top border-light border-opacity-10 d-flex flex-column flex-sm-row justify-content-end gap-3">
+                        <button type="submit" name="action" value="draft" class="btn btn-outline-light px-4 py-2">
+                            <i class="fas fa-save me-1"></i> Save as Draft
+                        </button>
+                        <button type="submit" name="action" value="submit" class="btn btn-primary px-4 py-2 fw-bold shadow-sm">
+                            <i class="fas fa-check-circle me-1"></i> Save & Submit for Approval
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const isPaidSwitch = document.getElementById('isPaidSwitch');
+    const priceInput = document.getElementById('priceInput');
+    const imageUrlInput = document.getElementById('imageUrlInput');
+    const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+    const imagePreview = document.getElementById('imagePreview');
+    const previewBtn = document.getElementById('previewBtn');
+
+    isPaidSwitch.addEventListener('change', () => {
+        if (isPaidSwitch.checked) {
+            priceInput.removeAttribute('disabled');
+        } else {
+            priceInput.setAttribute('disabled', 'disabled');
+            priceInput.value = '0.00';
+        }
+    });
+
+    function updatePreview() {
+        const url = imageUrlInput.value.trim();
+        if (url) {
+            imagePreview.src = url;
+            imagePreviewContainer.style.display = 'block';
+        } else {
+            imagePreviewContainer.style.display = 'none';
+        }
+    }
+    imageUrlInput.addEventListener('change', updatePreview);
+    previewBtn.addEventListener('click', updatePreview);
+});
+</script>
+{% endblock %}

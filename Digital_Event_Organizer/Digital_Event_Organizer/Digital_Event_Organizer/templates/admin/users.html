@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+
+{% block title %}User Management - Admin{% endblock %}
+
+{% block content %}
+<div class="row mb-4 align-items-center animate-fade">
+    <div class="col-md-8">
+        <h2 class="fw-bold mb-1">
+            <i class="fas fa-users-cog text-info me-2"></i>User <span class="text-gradient">Management</span>
+        </h2>
+        <p class="opacity-75 mb-0">Inspect user accounts, reassign roles, and manage access privileges.</p>
+    </div>
+    <div class="col-md-4 text-md-end mt-3 mt-md-0">
+        <a href="/admin/dashboard" class="btn btn-outline-light btn-sm px-3 py-2">
+            <i class="fas fa-arrow-left me-1"></i> Control Panel
+        </a>
+        <a href="/admin/export/users.csv" class="btn btn-glass btn-sm px-3 py-2 ms-2">
+            <i class="fas fa-download me-1"></i> Export CSV
+        </a>
+    </div>
+</div>
+
+<div class="glass-card p-4 animate-fade">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h5 class="fw-bold mb-0">All Registered Accounts ({{ users|length }})</h5>
+        <div style="max-width: 250px;">
+            <input type="text" id="userSearch" class="form-control glass-input form-control-sm" placeholder="Search users...">
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-dark table-hover align-middle mb-0" id="usersTable">
+            <thead>
+                <tr class="opacity-50 small text-uppercase">
+                    <th>User</th>
+                    <th>Email Address</th>
+                    <th>Role</th>
+                    <th>Bookings</th>
+                    <th>Account Status</th>
+                    <th>Registered</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in users %}
+                <tr>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="rounded-circle bg-primary bg-opacity-25 d-flex align-items-center justify-content-center text-white fw-bold" style="width: 38px; height: 38px;">
+                                {{ u.name[:1]|upper }}
+                            </div>
+                            <div>
+                                <span class="fw-bold text-white d-block">{{ u.name }}</span>
+                                <span class="x-small opacity-50">ID #{{ u.user_id }}</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td>{{ u.email }}</td>
+                    <td>
+                        {% if u.role == 'admin' %}
+                            <span class="badge bg-warning text-dark rounded-pill px-3 py-1"><i class="fas fa-shield-alt me-1"></i>Admin</span>
+                        {% elif u.role == 'organizer' %}
+                            <span class="badge bg-info rounded-pill px-3 py-1"><i class="fas fa-briefcase me-1"></i>Organizer</span>
+                        {% else %}
+                            <span class="badge bg-secondary rounded-pill px-3 py-1"><i class="fas fa-user me-1"></i>Attendee</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="fw-semibold text-gradient">{{ u.reg_count }} events</span>
+                    </td>
+                    <td>
+                        {% if u.is_active %}
+                            <span class="badge bg-success rounded-pill px-2 py-1"><i class="fas fa-check-circle me-1"></i>Active</span>
+                        {% else %}
+                            <span class="badge bg-danger rounded-pill px-2 py-1"><i class="fas fa-ban me-1"></i>Disabled</span>
+                        {% endif %}
+                    </td>
+                    <td class="small opacity-75">
+                        {{ u.created_at[:10] if u.created_at else 'N/A' }}
+                    </td>
+                    <td class="text-end">
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-glass dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                Manage
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-dark glass-card border-0 p-2 shadow-lg dropdown-menu-end">
+                                <li class="dropdown-header small opacity-50">Change Role</li>
+                                <li>
+                                    <form action="/admin/user/{{ u.user_id }}/change_role" method="POST" class="px-2 py-1">
+                                        <input type="hidden" name="role" value="admin">
+                                        <button type="submit" class="dropdown-item rounded-2 {{ 'active' if u.role == 'admin' else '' }}" {{ 'disabled' if u.role == 'admin' else '' }}>
+                                            <i class="fas fa-shield-alt me-2 text-warning"></i> Set as Admin
+                                        </button>
+                                    </form>
+                                </li>
+                                <li>
+                                    <form action="/admin/user/{{ u.user_id }}/change_role" method="POST" class="px-2 py-1">
+                                        <input type="hidden" name="role" value="organizer">
+                                        <button type="submit" class="dropdown-item rounded-2 {{ 'active' if u.role == 'organizer' else '' }}" {{ 'disabled' if u.role == 'organizer' else '' }}>
+                                            <i class="fas fa-briefcase me-2 text-info"></i> Set as Organizer
+                                        </button>
+                                    </form>
+                                </li>
+                                <li>
+                                    <form action="/admin/user/{{ u.user_id }}/change_role" method="POST" class="px-2 py-1">
+                                        <input type="hidden" name="role" value="attendee">
+                                        <button type="submit" class="dropdown-item rounded-2 {{ 'active' if u.role == 'attendee' else '' }}" {{ 'disabled' if u.role == 'attendee' else '' }}>
+                                            <i class="fas fa-user me-2 text-secondary"></i> Set as Attendee
+                                        </button>
+                                    </form>
+                                </li>
+                                <li><hr class="dropdown-divider opacity-25"></li>
+                                <li>
+                                    <form action="/admin/user/{{ u.user_id }}/toggle_status" method="POST" class="px-2 py-1">
+                                        {% if u.is_active %}
+                                        <button type="submit" class="dropdown-item rounded-2 text-danger" onclick="return confirm('Disable this user account?');">
+                                            <i class="fas fa-ban me-2"></i> Disable Account
+                                        </button>
+                                        {% else %}
+                                        <button type="submit" class="dropdown-item rounded-2 text-success">
+                                            <i class="fas fa-check-circle me-2"></i> Enable Account
+                                        </button>
+                                        {% endif %}
+                                    </form>
+                                </li>
+                            </ul>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" class="text-center py-4 opacity-50">No user accounts found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const searchInput = document.getElementById('userSearch');
+    if (searchInput) {
+        searchInput.addEventListener('input', () => {
+            const q = searchInput.value.toLowerCase();
+            const rows = document.querySelectorAll('#usersTable tbody tr');
+            rows.forEach(r => {
+                r.style.display = r.innerText.toLowerCase().includes(q) ? '' : 'none';
+            });
+        });
+    }
+});
+</script>
+{% endblock %}

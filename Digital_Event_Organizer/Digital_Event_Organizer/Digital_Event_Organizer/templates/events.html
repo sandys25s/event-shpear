@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+
+{% block title %}Explore Events - EventOrg{% endblock %}
+
+{% block content %}
+<div class="row mb-4 align-items-center animate-fade">
+    <div class="col-md-7">
+        <h2 class="fw-bold mb-1">
+            Explore Campus <span class="text-gradient">Experiences</span>
+        </h2>
+        <p class="opacity-75 mb-0">Discover workshops, symposia, hackathons, and cultural fests.</p>
+    </div>
+    <div class="col-md-5 text-md-end mt-3 mt-md-0">
+        <span class="badge bg-white bg-opacity-10 border border-light border-opacity-25 px-3 py-2 rounded-pill small">
+            Showing {{ events|length }} Events
+        </span>
+    </div>
+</div>
+
+<!-- Advanced Multi-Filter Search Bar -->
+<div class="glass-card p-4 mb-5 animate-fade">
+    <form method="GET" action="/events" id="filterForm">
+        <div class="row g-3">
+            <!-- Keyword Search -->
+            <div class="col-md-4">
+                <label class="form-label small fw-semibold opacity-75">Search Keyword</label>
+                <div class="input-group">
+                    <span class="input-group-text glass-input border-end-0 text-white"><i class="fas fa-search"></i></span>
+                    <input type="text" name="q" id="searchInput" class="form-control glass-input border-start-0 ps-0" placeholder="e.g. AI, Robotics, Hackathon..." value="{{ filters.q or '' }}">
+                </div>
+            </div>
+
+            <!-- Category -->
+            <div class="col-md-3 col-sm-6">
+                <label class="form-label small fw-semibold opacity-75">Category</label>
+                <select name="category" id="categoryFilter" class="form-select glass-input">
+                    <option value="all">All Categories</option>
+                    {% for c in categories %}
+                    <option value="{{ c.name }}" {{ 'selected' if filters.category == c.name else '' }}>{{ c.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Date Filter -->
+            <div class="col-md-3 col-sm-6">
+                <label class="form-label small fw-semibold opacity-75">Date / Timeline</label>
+                <select name="date_filter" id="dateFilter" class="form-select glass-input">
+                    <option value="all" {{ 'selected' if filters.date_filter == 'all' else '' }}>All Dates</option>
+                    <option value="today" {{ 'selected' if filters.date_filter == 'today' else '' }}>Today</option>
+                    <option value="this_week" {{ 'selected' if filters.date_filter == 'this_week' else '' }}>Next 7 Days</option>
+                    <option value="this_month" {{ 'selected' if filters.date_filter == 'this_month' else '' }}>This Month</option>
+                    <option value="past" {{ 'selected' if filters.date_filter == 'past' else '' }}>Past Events</option>
+                </select>
+            </div>
+
+            <!-- Location -->
+            <div class="col-md-2 col-sm-6">
+                <label class="form-label small fw-semibold opacity-75">Location / City</label>
+                <input type="text" name="location" id="locationFilter" class="form-control glass-input" placeholder="e.g. Chennai" value="{{ filters.location or '' }}">
+            </div>
+
+            <!-- Price Type -->
+            <div class="col-md-3 col-sm-6">
+                <label class="form-label small fw-semibold opacity-75">Cost</label>
+                <select name="price_type" id="priceFilter" class="form-select glass-input">
+                    <option value="all" {{ 'selected' if filters.price_type == 'all' else '' }}>All Pricing</option>
+                    <option value="free" {{ 'selected' if filters.price_type == 'free' else '' }}>Free Events</option>
+                    <option value="paid" {{ 'selected' if filters.price_type == 'paid' else '' }}>Paid Events</option>
+                </select>
+            </div>
+
+            <!-- Availability -->
+            <div class="col-md-3 col-sm-6">
+                <label class="form-label small fw-semibold opacity-75">Availability</label>
+                <select name="availability" id="availFilter" class="form-select glass-input">
+                    <option value="all" {{ 'selected' if filters.availability == 'all' else '' }}>All Events</option>
+                    <option value="available" {{ 'selected' if filters.availability == 'available' else '' }}>Available Seats Only</option>
+                </select>
+            </div>
+
+            <!-- Filter Buttons -->
+            <div class="col-md-6 d-flex align-items-end justify-content-md-end gap-2 pt-2">
+                <a href="/events" class="btn btn-outline-light px-3 py-2 btn-sm">
+                    <i class="fas fa-undo me-1"></i> Reset
+                </a>
+                <button type="submit" class="btn btn-primary px-4 py-2 btn-sm fw-semibold">
+                    <i class="fas fa-filter me-1"></i> Apply Filters
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Event Cards Grid -->
+<div class="row g-4 animate-fade" id="eventsGrid">
+    {% for event in events %}
+    <div class="col-md-6 col-lg-4 event-card-container">
+        <div class="glass-card h-100 overflow-hidden d-flex flex-column">
+            <!-- Event Banner -->
+            <div class="position-relative">
+                <img src="{{ event.image_url or '/static/placeholder.png' }}"
+                     onerror="this.onerror=null; this.src='/static/placeholder.png';"
+                     alt="{{ event.title }}"
+                     class="img-fluid w-100" style="height: 200px; object-fit: cover;">
+                
+                <!-- Category Badge -->
+                <div class="position-absolute top-0 end-0 m-3">
+                    <span class="badge bg-primary rounded-pill px-3 py-1 shadow-sm">{{ event.category }}</span>
+                </div>
+
+                <!-- Price Badge -->
+                <div class="position-absolute bottom-0 start-0 m-3">
+                    <span class="badge {{ 'bg-success' if not event.is_paid else 'bg-dark' }} bg-opacity-75 backdrop-blur px-3 py-1 rounded-pill">
+                        {{ "Free" if not event.is_paid else ("Rs. " + event.price|string) }}
+                    </span>
+                </div>
+
+                <!-- Status Overlay if Completed or Full -->
+                {% if event.status == 'COMPLETED' %}
+                <div class="position-absolute top-0 start-0 m-3">
+                    <span class="badge bg-secondary rounded-pill px-3 py-1">Completed</span>
+                </div>
+                {% elif event.current_participants >= event.max_participants %}
+                <div class="position-absolute top-0 start-0 m-3">
+                    <span class="badge bg-warning text-dark rounded-pill px-3 py-1">Event Full</span>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Card Content -->
+            <div class="p-4 d-flex flex-column flex-grow-1">
+                <div class="d-flex justify-content-between align-items-baseline mb-2">
+                    <span class="small opacity-50"><i class="fas fa-calendar me-1"></i>{{ event.date }}</span>
+                    <span class="small opacity-50"><i class="fas fa-clock me-1"></i>{{ event.time }}</span>
+                </div>
+
+                <h5 class="fw-bold mb-2 text-white">{{ event.title }}</h5>
+                <p class="small opacity-75 mb-3 flex-grow-1">{{ event.description[:95] }}...</p>
+
+                <!-- Venue & Capacity Bar -->
+                <div class="p-2 rounded-3 bg-white bg-opacity-5 mb-3">
+                    <div class="d-flex justify-content-between align-items-center small mb-1">
+                        <span class="opacity-75 text-truncate" style="max-width: 170px;">
+                            <i class="fas fa-map-marker-alt me-1 text-danger"></i>{{ event.venue }}{{ (', ' + event.city) if event.city else '' }}
+                        </span>
+                        {% set seats_left = event.max_participants - event.current_participants %}
+                        <span class="fw-semibold {{ 'text-danger' if seats_left <= 5 else 'text-success' }}">
+                            {{ seats_left if seats_left > 0 else 0 }} seats left
+                        </span>
+                    </div>
+                    <div class="progress" style="height: 4px; background: rgba(255,255,255,0.1);">
+                        {% set pct = (event.current_participants / event.max_participants * 100) if event.max_participants > 0 else 0 %}
+                        <div class="progress-bar bg-primary" style="width: {{ pct }}%;"></div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mt-auto">
+                    {% if event.status == 'COMPLETED' %}
+                    <span class="small opacity-50">Past Event</span>
+                    <a href="/event/{{ event.event_id }}" class="btn btn-sm btn-outline-light px-3">View Summary</a>
+                    {% elif event.current_participants >= event.max_participants %}
+                    <a href="/event/{{ event.event_id }}" class="btn btn-sm btn-warning w-100 fw-bold">
+                        <i class="fas fa-hourglass-half me-1"></i> Join Waitlist
+                    </a>
+                    {% else %}
+                    <a href="/event/{{ event.event_id }}" class="btn btn-sm btn-glass w-100 fw-bold">
+                        View Details & Register &rarr;
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="col-12 text-center py-5">
+        <div class="glass-card p-5">
+            <i class="fas fa-calendar-times fa-4x mb-3 text-secondary opacity-50"></i>
+            <h4 class="fw-bold mb-2">No Matching Events Found</h4>
+            <p class="opacity-50 small mb-4">Try adjusting your keyword, categories, or date criteria.</p>
+            <a href="/events" class="btn btn-glass px-4 py-2">Reset All Filters</a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // Instant client-side typing search filter
+    const searchInput = document.getElementById('searchInput');
+    const cards = document.querySelectorAll('.event-card-container');
+
+    if (searchInput) {
+        searchInput.addEventListener('input', () => {
+            const query = searchInput.value.toLowerCase().trim();
+            cards.forEach(card => {
+                const text = card.innerText.toLowerCase();
+                card.style.display = text.includes(query) ? '' : 'none';
+            });
+        });
+    }
+});
+</script>
+{% endblock %}

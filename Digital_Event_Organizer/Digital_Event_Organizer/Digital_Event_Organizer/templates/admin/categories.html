@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}Category Management - Admin{% endblock %}
+
+{% block content %}
+<div class="row mb-4 align-items-center animate-fade">
+    <div class="col-md-8">
+        <h2 class="fw-bold mb-1">
+            <i class="fas fa-tags text-primary me-2"></i>Event <span class="text-gradient">Categories</span>
+        </h2>
+        <p class="opacity-75 mb-0">Organize events across campus categories and topics.</p>
+    </div>
+    <div class="col-md-4 text-md-end mt-3 mt-md-0">
+        <a href="/admin/dashboard" class="btn btn-outline-light btn-sm px-3 py-2">
+            <i class="fas fa-arrow-left me-1"></i> Control Panel
+        </a>
+    </div>
+</div>
+
+<div class="row g-4 animate-fade">
+    <!-- Add Category Form -->
+    <div class="col-lg-4">
+        <div class="glass-card p-4">
+            <h5 class="fw-bold mb-3"><i class="fas fa-plus-circle text-primary me-2"></i>Add New Category</h5>
+            <form method="POST">
+                <div class="mb-3">
+                    <label class="form-label small opacity-75">Category Name <span class="text-danger">*</span></label>
+                    <input type="text" name="name" class="form-control glass-input" placeholder="e.g. Hackathon, Gaming" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small opacity-75">Description</label>
+                    <textarea name="description" class="form-control glass-input" rows="3" placeholder="Brief description of this event category..."></textarea>
+                </div>
+                <div class="mb-4">
+                    <label class="form-label small opacity-75">Icon Class (FontAwesome)</label>
+                    <input type="text" name="icon" class="form-control glass-input" value="fa-calendar-alt" placeholder="e.g. fa-laptop-code, fa-music">
+                    <div class="form-text opacity-50 small">FontAwesome icon class name.</div>
+                </div>
+                <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold">
+                    <i class="fas fa-save me-1"></i> Save Category
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Categories List -->
+    <div class="col-lg-8">
+        <div class="glass-card p-4">
+            <h5 class="fw-bold mb-4">Existing Categories ({{ categories|length }})</h5>
+            <div class="row g-3">
+                {% for cat in categories %}
+                <div class="col-md-6">
+                    <div class="p-3 rounded-4 bg-white bg-opacity-5 border border-light border-opacity-10 d-flex justify-content-between align-items-center h-100">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="p-3 rounded-circle bg-primary bg-opacity-25 text-primary">
+                                <i class="fas {{ cat.icon or 'fa-folder' }} fa-lg"></i>
+                            </div>
+                            <div>
+                                <h6 class="fw-bold mb-1 text-white">{{ cat.name }}</h6>
+                                <p class="small opacity-50 mb-0">{{ cat.description or 'No description' }}</p>
+                                <span class="badge bg-white bg-opacity-10 rounded-pill small mt-2">
+                                    {{ cat.event_count }} events
+                                </span>
+                            </div>
+                        </div>
+                        <form action="/admin/category/{{ cat.category_id }}/delete" method="POST" onsubmit="return confirm('Remove category {{ cat.name }}?');">
+                            <button type="submit" class="btn btn-sm btn-outline-danger border-0 rounded-circle" title="Delete category">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                {% else %}
+                <div class="col-12 text-center py-4 opacity-50">
+                    No categories defined.
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

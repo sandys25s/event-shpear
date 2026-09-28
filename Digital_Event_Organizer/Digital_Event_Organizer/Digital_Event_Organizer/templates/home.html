@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}Home - EventOrg Management Platform{% endblock %}
+
+{% block content %}
+<div class="row min-vh-75 align-items-center mb-5">
+    <div class="col-lg-6 animate-fade">
+        <span class="badge bg-primary bg-opacity-25 text-white px-3 py-2 rounded-pill small mb-3 border border-light border-opacity-25">
+            <i class="fas fa-sparkles text-warning me-1"></i> Unified Event Management Platform
+        </span>
+        <h1 class="display-3 fw-bold mb-4">Organize Your <span class="text-gradient">Campus Events</span> Digitally.</h1>
+        <p class="lead mb-5 opacity-75">Connect, register, issue digital QR passes, and verify attendance seamlessly. A production-ready solution for campus and academic event operations.</p>
+        <div class="d-flex flex-wrap gap-3">
+            <a href="/events" class="btn btn-primary btn-lg px-4 py-3 fw-semibold shadow">
+                <i class="fas fa-compass me-2"></i> Explore Events
+            </a>
+            {% if not session.get('user_id') %}
+            <a href="/register" class="btn btn-outline-light btn-lg px-4 py-3 rounded-4">
+                <i class="fas fa-user-plus me-2"></i> Get Started
+            </a>
+            {% else %}
+            <a href="/dashboard" class="btn btn-outline-light btn-lg px-4 py-3 rounded-4">
+                <i class="fas fa-th-large me-2"></i> My Dashboard
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    <div class="col-lg-6 d-none d-lg-block animate-fade" style="animation-delay: 0.2s;">
+        <div class="glass-card p-4 text-center">
+            <img src="https://images.unsplash.com/photo-1540575861501-7ad0582373f2?auto=format&fit=crop&q=80&w=800"
+                alt="Event Atmosphere" class="img-fluid rounded-4 shadow-lg mb-4" style="height: 280px; width: 100%; object-fit: cover;">
+            <div class="row mt-2">
+                <div class="col-4 border-end border-light border-opacity-25">
+                    <h3 class="fw-bold mb-0 text-gradient">{{ stats.events }}</h3>
+                    <p class="small opacity-50 mb-0">Active Events</p>
+                </div>
+                <div class="col-4 border-end border-light border-opacity-25">
+                    <h3 class="fw-bold mb-0 text-gradient">{{ stats.users }}</h3>
+                    <p class="small opacity-50 mb-0">Platform Users</p>
+                </div>
+                <div class="col-4">
+                    <h3 class="fw-bold mb-0 text-gradient">{{ stats.categories }}</h3>
+                    <p class="small opacity-50 mb-0">Categories</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<section class="mb-5">
+    <div class="d-flex justify-content-between align-items-end mb-4 animate-fade">
+        <div>
+            <h2 class="fw-bold mb-1">Upcoming <span class="text-gradient">Featured</span> Events</h2>
+            <p class="opacity-50 mb-0">Handpicked upcoming campus sessions and workshops.</p>
+        </div>
+        <a href="/events" class="text-decoration-none text-white opacity-75 hover-opacity-100 fw-semibold">View All &rarr;</a>
+    </div>
+
+    <div class="row g-4">
+        {% for event in events %}
+        <div class="col-md-6 col-lg-4 animate-fade" style="animation-delay: {{ loop.index0 * 0.1 }}s;">
+            <div class="glass-card h-100 overflow-hidden d-flex flex-column">
+                <div class="position-relative">
+                    <img src="{{ event.image_url or '/static/placeholder.png' }}"
+                        onerror="this.onerror=null; this.src='/static/placeholder.png';"
+                        alt="{{ event.title }}" class="img-fluid w-100" style="height: 200px; object-fit: cover;">
+                    <div class="position-absolute top-0 end-0 m-3">
+                        <span class="badge bg-primary rounded-pill px-3 py-1 shadow-sm">{{ event.category }}</span>
+                    </div>
+                </div>
+                <div class="p-4 d-flex flex-column flex-grow-1">
+                    <div class="d-flex justify-content-between align-items-baseline mb-2">
+                        <span class="small opacity-50"><i class="fas fa-calendar me-1"></i>{{ event.date }}</span>
+                        <span class="small opacity-50"><i class="fas fa-clock me-1"></i>{{ event.time }}</span>
+                    </div>
+                    <h5 class="fw-bold mb-2 text-white">{{ event.title }}</h5>
+                    <p class="small opacity-75 mb-3 flex-grow-1">{{ event.description[:95] }}...</p>
+                    <div class="d-flex justify-content-between align-items-center mt-auto pt-2 border-top border-light border-opacity-10">
+                        <span class="fw-bold text-gradient">{{ ("Rs. " + event.price|string) if event.is_paid else "Free" }}</span>
+                        <a href="/event/{{ event.event_id }}" class="btn btn-sm btn-glass">Details &rarr;</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="col-12 text-center py-5">
+            <p class="opacity-50">No events found yet. Check back later!</p>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

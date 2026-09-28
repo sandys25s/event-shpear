@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}My Tickets - EventOrg{% endblock %}
+
+{% block content %}
+<div class="row mb-4 align-items-center animate-fade">
+    <div class="col-md-7">
+        <h2 class="fw-bold mb-1">
+            <i class="fas fa-ticket-alt text-warning me-2"></i>My Digital <span class="text-gradient">Tickets</span>
+        </h2>
+        <p class="opacity-75 mb-0">Present your mobile QR codes at event entry gates for verified check-in.</p>
+    </div>
+    <div class="col-md-5 text-md-end mt-3 mt-md-0">
+        <a href="/user/dashboard" class="btn btn-outline-light btn-sm px-3 py-2">
+            <i class="fas fa-arrow-left me-1"></i> Dashboard
+        </a>
+    </div>
+</div>
+
+<div class="row g-4 animate-fade">
+    {% for t in tickets %}
+    <div class="col-md-6 col-lg-4">
+        <div class="glass-card overflow-hidden h-100 d-flex flex-column border border-light border-opacity-25 shadow-lg position-relative" style="border-radius: 20px;">
+            <!-- Header Banner -->
+            <div class="p-3 bg-primary bg-opacity-25 border-bottom border-light border-opacity-10 d-flex justify-content-between align-items-center">
+                <span class="badge bg-white bg-opacity-10 border border-light border-opacity-25 rounded-pill px-3 py-1 font-monospace small">
+                    {{ t.ticket_code }}
+                </span>
+                {% if t.registration_status == 'ATTENDED' %}
+                <span class="badge bg-success rounded-pill px-2 py-1 small"><i class="fas fa-check-double me-1"></i>Checked In</span>
+                {% elif t.registration_status == 'CONFIRMED' %}
+                <span class="badge bg-primary rounded-pill px-2 py-1 small">Valid</span>
+                {% else %}
+                <span class="badge bg-secondary rounded-pill px-2 py-1 small">{{ t.registration_status }}</span>
+                {% endif %}
+            </div>
+
+            <!-- Ticket Body -->
+            <div class="p-4 d-flex flex-column flex-grow-1">
+                <h5 class="fw-bold text-white mb-2">{{ t.title }}</h5>
+
+                <div class="d-flex flex-column gap-1 small opacity-75 mb-4">
+                    <span><i class="fas fa-calendar-day text-primary me-2"></i>{{ t.date }}</span>
+                    <span><i class="fas fa-clock text-warning me-2"></i>{{ t.time }}{{ (' - ' + t.end_time) if t.end_time else '' }}</span>
+                    <span><i class="fas fa-map-marker-alt text-danger me-2"></i>{{ t.venue }}{{ (', ' + t.city) if t.city else '' }}</span>
+                </div>
+
+                <!-- QR Code Preview Center -->
+                <div class="p-3 rounded-4 bg-white text-center mx-auto mb-3 shadow" style="width: 160px; height: 160px;">
+                    <img src="{{ t.qr_path or ('/static/uploads/qrcodes/' + t.ticket_code + '.png') }}"
+                         onerror="this.onerror=null; this.src='https://api.qrserver.com/v1/create-qr-code/?size=150x150&data={{ t.ticket_code }}';"
+                         alt="QR Barcode" class="img-fluid" style="width: 100%; height: 100%; object-fit: contain;">
+                </div>
+
+                <div class="text-center mt-auto">
+                    <span class="x-small opacity-50 d-block mb-3">Scan at entrance scanner</span>
+                    <a href="/ticket/{{ t.ticket_code }}" class="btn btn-glass w-100 fw-bold">
+                        <i class="fas fa-expand me-1"></i> Open Full Ticket
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="col-12 text-center py-5">
+        <div class="glass-card p-5">
+            <i class="fas fa-ticket-alt fa-4x mb-3 text-secondary opacity-50"></i>
+            <h4 class="fw-bold mb-2">No Active Tickets</h4>
+            <p class="opacity-50 small mb-4">You have not registered for any events yet.</p>
+            <a href="/events" class="btn btn-glass px-4 py-2">Find Events to Attend</a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

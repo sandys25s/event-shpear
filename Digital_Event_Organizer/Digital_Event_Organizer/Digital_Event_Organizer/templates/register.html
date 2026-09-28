@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}Create Account - EventOrg{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center align-items-center min-vh-75 py-4">
+    <div class="col-md-6 col-lg-5 animate-fade">
+        <div class="glass-card p-4 p-md-5">
+            <div class="text-center mb-4">
+                <h2 class="fw-bold mb-1">Create <span class="text-gradient">Account</span></h2>
+                <p class="opacity-50 small">Join EventOrg to organize and register for campus events</p>
+            </div>
+
+            <form method="POST">
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold opacity-75">Full Name</label>
+                    <input type="text" name="name" class="form-control glass-input" placeholder="e.g. Santhosh Kumar" required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold opacity-75">Email Address</label>
+                    <input type="email" name="email" class="form-control glass-input" placeholder="name@college.edu" required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold opacity-75">Password</label>
+                    <input type="password" name="password" class="form-control glass-input" placeholder="Minimum 6 characters" minlength="6" required>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label small fw-semibold opacity-75">Account Type</label>
+                    <select name="role" class="form-select glass-input" required>
+                        <option value="attendee" selected>Attendee (Browse, Register & Attend Events)</option>
+                        <option value="organizer">Organizer (Create, Publish & Host Events)</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100 py-3 mb-4 fw-bold shadow">
+                    Create Account &rarr;
+                </button>
+
+                <p class="text-center small opacity-50 mb-0">
+                    Already have an account? <a href="/login" class="text-white text-decoration-none fw-bold">Login here</a>
+                </p>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

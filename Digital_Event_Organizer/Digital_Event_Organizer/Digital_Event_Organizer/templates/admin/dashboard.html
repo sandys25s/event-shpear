@@ -1,0 +1,454 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Control Panel - EventOrg{% endblock %}
+
+{% block content %}
+<div class="row mb-4 align-items-center animate-fade">
+    <div class="col-md-7">
+        <h2 class="fw-bold mb-1">
+            <i class="fas fa-shield-alt text-primary me-2"></i>Admin <span class="text-gradient">Control Panel</span>
+        </h2>
+        <p class="opacity-75 mb-0">Platform overview, database metrics, event lifecycles, and user controls.</p>
+    </div>
+    <div class="col-md-5 text-md-end mt-3 mt-md-0 d-flex flex-wrap justify-content-md-end gap-2">
+        <div class="dropdown">
+            <button class="btn btn-outline-light btn-sm dropdown-toggle px-3 py-2" type="button" data-bs-toggle="dropdown">
+                <i class="fas fa-download me-1"></i> Export Reports
+            </button>
+            <ul class="dropdown-menu dropdown-menu-dark glass-card border-0 p-2 shadow-lg">
+                <li><a class="dropdown-item rounded-2" href="/admin/export/events.csv"><i class="fas fa-calendar-alt me-2 text-info"></i> Events CSV</a></li>
+                <li><a class="dropdown-item rounded-2" href="/admin/export/users.csv"><i class="fas fa-users me-2 text-primary"></i> Users CSV</a></li>
+                <li><a class="dropdown-item rounded-2" href="/admin/export/registrations.csv"><i class="fas fa-ticket-alt me-2 text-warning"></i> Registrations CSV</a></li>
+                <li><a class="dropdown-item rounded-2" href="/admin/export/attendance.csv"><i class="fas fa-check-double me-2 text-success"></i> Attendance CSV</a></li>
+            </ul>
+        </div>
+        <a href="/admin/approvals" class="btn btn-glass btn-sm px-3 py-2 position-relative">
+            <i class="fas fa-clipboard-check me-1 text-warning"></i> Approvals
+            {% if pending_approvals > 0 %}
+            <span class="badge bg-danger rounded-pill ms-1">{{ pending_approvals }}</span>
+            {% endif %}
+        </a>
+        <a href="/admin/create_event" class="btn btn-primary btn-sm px-3 py-2 fw-semibold">
+            <i class="fas fa-plus me-1"></i> Create Event
+        </a>
+    </div>
+</div>
+
+<!-- Primary Real-Time Metric Cards -->
+<div class="row g-4 mb-4 animate-fade">
+    <div class="col-md-6 col-lg-3">
+        <div class="glass-card p-4 position-relative overflow-hidden h-100">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                    <span class="small opacity-75 text-uppercase fw-semibold">Total Events</span>
+                    <h2 class="fw-bold mb-0 text-gradient display-6 mt-1">{{ total_events }}</h2>
+                </div>
+                <div class="p-3 bg-primary bg-opacity-25 rounded-circle text-primary">
+                    <i class="fas fa-calendar-alt fa-2x"></i>
+                </div>
+            </div>
+            <div class="small opacity-50">
+                <span class="text-success"><i class="fas fa-circle me-1" style="font-size: 8px;"></i>Live</span> database records
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3">
+        <div class="glass-card p-4 position-relative overflow-hidden h-100">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                    <span class="small opacity-75 text-uppercase fw-semibold">Platform Users</span>
+                    <h2 class="fw-bold mb-0 text-gradient display-6 mt-1">{{ user_count }}</h2>
+                </div>
+                <div class="p-3 bg-success bg-opacity-25 rounded-circle text-success">
+                    <i class="fas fa-users fa-2x"></i>
+                </div>
+            </div>
+            <div class="small opacity-50">
+                <a href="/admin/users" class="text-decoration-none text-white opacity-75 hover-opacity-100">Manage users &rarr;</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3">
+        <div class="glass-card p-4 position-relative overflow-hidden h-100">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                    <span class="small opacity-75 text-uppercase fw-semibold">Registrations</span>
+                    <h2 class="fw-bold mb-0 text-gradient display-6 mt-1">{{ reg_count }}</h2>
+                </div>
+                <div class="p-3 bg-warning bg-opacity-25 rounded-circle text-warning">
+                    <i class="fas fa-ticket-alt fa-2x"></i>
+                </div>
+            </div>
+            <div class="small opacity-50">
+                <span>Active confirmed bookings</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3">
+        <div class="glass-card p-4 position-relative overflow-hidden h-100">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                    <span class="small opacity-75 text-uppercase fw-semibold">Total Attended</span>
+                    <h2 class="fw-bold mb-0 text-gradient display-6 mt-1">{{ total_attendance }}</h2>
+                </div>
+                <div class="p-3 bg-info bg-opacity-25 rounded-circle text-info">
+                    <i class="fas fa-user-check fa-2x"></i>
+                </div>
+            </div>
+            <div class="small opacity-50">
+                <a href="/organizer/checkin" class="text-decoration-none text-info">Open QR scanner &rarr;</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Analytics Panels: Categories & Registration Trends -->
+<div class="row g-4 mb-5 animate-fade">
+    <div class="col-lg-5">
+        <div class="glass-card p-4 h-100 d-flex flex-column">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h5 class="fw-bold mb-0"><i class="fas fa-chart-pie me-2 text-primary"></i>Event Categories</h5>
+                <a href="/admin/categories" class="btn btn-sm btn-glass px-2 py-1 small">Manage</a>
+            </div>
+            <p class="small opacity-50 mb-3">Distribution of events across academic & extracurricular categories.</p>
+            
+            <div id="categoryChartContainer" class="position-relative flex-grow-1" style="height: 210px; width: 100%; overflow: hidden;">
+                <div id="catChartLoading" class="position-absolute top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center" style="background: rgba(15, 12, 41, 0.3); backdrop-filter: blur(2px); z-index: 5;">
+                    <div class="spinner-border text-primary spinner-border-sm me-2" role="status"></div>
+                    <span class="small opacity-50">Loading category analytics...</span>
+                </div>
+                <canvas id="categoryChart"></canvas>
+            </div>
+
+            <!-- Categories breakdown pills -->
+            <div class="mt-auto pt-3 border-top border-light border-opacity-10">
+                <div class="d-flex flex-wrap gap-2">
+                    {% for cat in categories_stat %}
+                    <span class="badge bg-white bg-opacity-10 p-2 px-3 rounded-pill border border-light border-opacity-25 small text-white fw-normal d-inline-flex align-items-center">
+                        <i class="fas fa-circle me-1 small" style="font-size: 8px; color: #a29bfe;"></i>{{ cat.category }}: <strong class="text-gradient ms-1">{{ cat.count }}</strong>
+                    </span>
+                    {% else %}
+                    <span class="small opacity-50"><i class="fas fa-info-circle me-1"></i>No events categorized yet.</span>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-7">
+        <div class="glass-card p-4 h-100 d-flex flex-column">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h5 class="fw-bold mb-0"><i class="fas fa-chart-line me-2 text-warning"></i>Registration & Participation Trends</h5>
+                <span class="badge bg-primary bg-opacity-25 text-white px-3 py-1 rounded-pill small">Last 14 Days</span>
+            </div>
+            <p class="small opacity-50 mb-3">Daily attendee registrations processed through the platform.</p>
+
+            <div id="trendChartContainer" class="position-relative flex-grow-1" style="height: 210px; width: 100%; overflow: hidden;">
+                <div id="trendChartLoading" class="position-absolute top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center" style="background: rgba(15, 12, 41, 0.3); backdrop-filter: blur(2px); z-index: 5;">
+                    <div class="spinner-border text-warning spinner-border-sm me-2" role="status"></div>
+                    <span class="small opacity-50">Loading participation trends...</span>
+                </div>
+                <canvas id="trendsChart"></canvas>
+            </div>
+
+            <div id="trendEmptyState" class="text-center py-4 d-none">
+                <p class="small opacity-50 mb-0"><i class="fas fa-info-circle me-1"></i>No registration activity recorded in the past 14 days.</p>
+            </div>
+
+            <div class="mt-auto pt-3 border-top border-light border-opacity-10 d-flex justify-content-between align-items-center small opacity-75">
+                <span><i class="fas fa-calendar-check text-warning me-1"></i>Tracks active bookings & registrations</span>
+                <span class="badge bg-success bg-opacity-25 text-success rounded-pill px-2 py-1"><i class="fas fa-circle me-1" style="font-size: 7px;"></i>Live Activity</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Manage Events Table -->
+<div class="glass-card p-4 animate-fade">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+        <div>
+            <h4 class="fw-bold mb-1">Manage All Events</h4>
+            <p class="small opacity-50 mb-0">Real-time status, capacities, and controls for all events.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <input type="text" id="adminEventFilter" class="form-control glass-input form-control-sm" placeholder="Filter table...">
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-dark table-hover align-middle mb-0" id="adminEventsTable">
+            <thead>
+                <tr class="opacity-50 small text-uppercase">
+                    <th>Title & Organizer</th>
+                    <th>Category</th>
+                    <th>Date & Time</th>
+                    <th>Price</th>
+                    <th>Capacity / Reg</th>
+                    <th>Status</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for event in events %}
+                <tr>
+                    <td>
+                        <a href="/event/{{ event.event_id }}" class="fw-bold text-white text-decoration-none d-block">
+                            {{ event.title }}
+                        </a>
+                        <span class="small opacity-50"><i class="fas fa-user-tie me-1"></i>{{ event.organizer_name or 'Admin' }}</span>
+                    </td>
+                    <td>
+                        <span class="badge bg-white bg-opacity-10 border border-light border-opacity-25 rounded-pill px-3 py-1">
+                            {{ event.category }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="d-block small fw-semibold">{{ event.date }}</span>
+                        <span class="small opacity-50">{{ event.time }}</span>
+                    </td>
+                    <td>
+                        <span class="fw-bold text-gradient">
+                            {{ "Rs. " + event.price|string if event.is_paid else "Free" }}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="progress flex-grow-1" style="height: 6px; width: 70px; background: rgba(255,255,255,0.1);">
+                                {% set pct = (event.current_participants / event.max_participants * 100) if event.max_participants > 0 else 0 %}
+                                <div class="progress-bar bg-primary" style="width: {{ pct }}%;"></div>
+                            </div>
+                            <span class="small fw-semibold">{{ event.current_participants }}/{{ event.max_participants }}</span>
+                        </div>
+                    </td>
+                    <td>
+                        {% set st = event.status %}
+                        {% if st == 'PUBLISHED' %}
+                            <span class="badge bg-success rounded-pill px-2 py-1"><i class="fas fa-check-circle me-1"></i>Published</span>
+                        {% elif st == 'PENDING_APPROVAL' %}
+                            <span class="badge bg-warning text-dark rounded-pill px-2 py-1"><i class="fas fa-clock me-1"></i>Pending</span>
+                        {% elif st == 'DRAFT' %}
+                            <span class="badge bg-secondary rounded-pill px-2 py-1"><i class="fas fa-edit me-1"></i>Draft</span>
+                        {% elif st == 'REJECTED' %}
+                            <span class="badge bg-danger rounded-pill px-2 py-1"><i class="fas fa-times-circle me-1"></i>Rejected</span>
+                        {% elif st == 'CANCELLED' %}
+                            <span class="badge bg-danger bg-opacity-50 text-white rounded-pill px-2 py-1"><i class="fas fa-ban me-1"></i>Cancelled</span>
+                        {% elif st == 'COMPLETED' %}
+                            <span class="badge bg-info rounded-pill px-2 py-1"><i class="fas fa-flag-checkered me-1"></i>Completed</span>
+                        {% else %}
+                            <span class="badge bg-secondary rounded-pill px-2 py-1">{{ st }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end">
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-glass dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                Options
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-dark glass-card border-0 p-2 shadow-lg">
+                                <li><a class="dropdown-item rounded-2" href="/event/{{ event.event_id }}"><i class="fas fa-eye me-2 text-info"></i>View Public Page</a></li>
+                                <li><a class="dropdown-item rounded-2" href="/admin/edit_event/{{ event.event_id }}"><i class="fas fa-pencil-alt me-2 text-warning"></i>Edit Event</a></li>
+                                <li><a class="dropdown-item rounded-2" href="/admin/view_participants/{{ event.event_id }}"><i class="fas fa-users me-2 text-primary"></i>Participants ({{ event.reg_count }})</a></li>
+                                <li><a class="dropdown-item rounded-2" href="/organizer/checkin/{{ event.event_id }}"><i class="fas fa-qrcode me-2 text-success"></i>Scan / Check-in</a></li>
+                                <li><hr class="dropdown-divider opacity-25"></li>
+                                <li><a class="dropdown-item rounded-2 text-danger" href="/admin/delete_event/{{ event.event_id }}" onclick="return confirm('Are you sure you want to cancel or delete this event?');"><i class="fas fa-trash-alt me-2"></i>Delete / Cancel</a></li>
+                            </ul>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" class="text-center py-5 opacity-50">
+                        <i class="fas fa-calendar-times fa-3x mb-3 text-secondary opacity-50 d-block"></i>
+                        No events have been created yet. <a href="/admin/create_event" class="text-white">Create your first event</a>.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // Real-Time Table Filter
+    const filterInput = document.getElementById('adminEventFilter');
+    if (filterInput) {
+        filterInput.addEventListener('input', () => {
+            const query = filterInput.value.toLowerCase();
+            const rows = document.querySelectorAll('#adminEventsTable tbody tr');
+            rows.forEach(r => {
+                r.style.display = r.innerText.toLowerCase().includes(query) ? '' : 'none';
+            });
+        });
+    }
+
+    // Fetch Real Analytics Data for Chart.js
+    fetch('/api/admin/analytics-data')
+        .then(response => {
+            if (!response.ok) throw new Error('Network response failed');
+            return response.json();
+        })
+        .then(data => {
+            const isMobile = window.innerWidth < 576;
+
+            // 1. Render Category Doughnut Chart
+            const catLoading = document.getElementById('catChartLoading');
+            if (catLoading) catLoading.remove();
+
+            const catCanvas = document.getElementById('categoryChart');
+            const catLabels = Object.keys(data.categories || {});
+            const catValues = Object.values(data.categories || {});
+
+            if (catLabels.length > 0 && catCanvas) {
+                new Chart(catCanvas, {
+                    type: 'doughnut',
+                    data: {
+                        labels: catLabels,
+                        datasets: [{
+                            data: catValues,
+                            backgroundColor: [
+                                '#6c5ce7', '#00cec9', '#fdcb6e', '#e84393', '#0984e3', '#00b894'
+                            ],
+                            borderColor: 'rgba(255, 255, 255, 0.12)',
+                            borderWidth: 2,
+                            hoverOffset: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        layout: {
+                            padding: { top: 4, bottom: 4, left: 4, right: isMobile ? 4 : 8 }
+                        },
+                        plugins: {
+                            legend: {
+                                position: isMobile ? 'bottom' : 'right',
+                                labels: {
+                                    color: '#ffffff',
+                                    font: { family: 'Outfit', size: isMobile ? 10 : 11 },
+                                    boxWidth: 10,
+                                    padding: isMobile ? 6 : 10,
+                                    usePointStyle: true,
+                                    pointStyle: 'circle'
+                                }
+                            },
+                            tooltip: {
+                                backgroundColor: 'rgba(15, 12, 41, 0.92)',
+                                titleFont: { family: 'Outfit', size: 12 },
+                                bodyFont: { family: 'Outfit', size: 11 },
+                                borderColor: 'rgba(255, 255, 255, 0.2)',
+                                borderWidth: 1,
+                                padding: 8,
+                                cornerRadius: 8
+                            }
+                        },
+                        cutout: '68%'
+                    }
+                });
+            } else if (catCanvas) {
+                catCanvas.parentElement.innerHTML = '<div class="d-flex justify-content-center align-items-center h-100 opacity-50 small"><i class="fas fa-info-circle me-1"></i>No categories found.</div>';
+            }
+
+            // 2. Render Registration Trends Line Chart
+            const trendLoading = document.getElementById('trendChartLoading');
+            if (trendLoading) trendLoading.remove();
+
+            const trendCanvas = document.getElementById('trendsChart');
+            const timeline = data.timeline || {};
+            const trendLabels = Object.keys(timeline);
+            const trendValues = Object.values(timeline);
+
+            if (trendLabels.length > 0 && trendCanvas) {
+                new Chart(trendCanvas, {
+                    type: 'line',
+                    data: {
+                        labels: trendLabels,
+                        datasets: [{
+                            label: 'Daily Registrations',
+                            data: trendValues,
+                            borderColor: '#a29bfe',
+                            backgroundColor: 'rgba(108, 92, 231, 0.2)',
+                            fill: true,
+                            tension: 0.35,
+                            pointBackgroundColor: '#6c5ce7',
+                            pointBorderColor: '#ffffff',
+                            pointBorderWidth: 1.5,
+                            pointRadius: 4,
+                            pointHoverRadius: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        layout: {
+                            padding: { top: 6, bottom: 4, left: 4, right: 12 }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    color: 'rgba(255, 255, 255, 0.7)',
+                                    precision: 0,
+                                    font: { family: 'Outfit', size: 11 },
+                                    stepSize: 1
+                                },
+                                grid: {
+                                    color: 'rgba(255, 255, 255, 0.08)',
+                                    drawBorder: false
+                                }
+                            },
+                            x: {
+                                ticks: {
+                                    color: 'rgba(255, 255, 255, 0.7)',
+                                    font: { family: 'Outfit', size: 10 },
+                                    maxRotation: 45,
+                                    minRotation: 0,
+                                    autoSkip: true,
+                                    maxTicksLimit: isMobile ? 6 : 14
+                                },
+                                grid: {
+                                    color: 'rgba(255, 255, 255, 0.04)',
+                                    drawBorder: false
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                backgroundColor: 'rgba(15, 12, 41, 0.92)',
+                                titleFont: { family: 'Outfit', size: 12 },
+                                bodyFont: { family: 'Outfit', size: 11 },
+                                borderColor: 'rgba(255, 255, 255, 0.2)',
+                                borderWidth: 1,
+                                padding: 8,
+                                cornerRadius: 8
+                            }
+                        }
+                    }
+                });
+            } else if (trendCanvas) {
+                trendCanvas.style.display = 'none';
+                const emptyEl = document.getElementById('trendEmptyState');
+                if (emptyEl) emptyEl.classList.remove('d-none');
+            }
+        })
+        .catch(err => {
+            console.error('Analytics load error:', err);
+            const catLoading = document.getElementById('catChartLoading');
+            if (catLoading) {
+                catLoading.className = 'd-flex justify-content-center align-items-center h-100 text-center p-3';
+                catLoading.innerHTML = '<span class="text-danger small"><i class="fas fa-exclamation-triangle me-1"></i>Unable to load category analytics.</span>';
+            }
+            const trendLoading = document.getElementById('trendChartLoading');
+            if (trendLoading) {
+                trendLoading.className = 'd-flex justify-content-center align-items-center h-100 text-center p-3';
+                trendLoading.innerHTML = '<span class="text-danger small"><i class="fas fa-exclamation-triangle me-1"></i>Unable to load participation trends.</span>';
+            }
+        });
+});
+</script>
+{% endblock %}

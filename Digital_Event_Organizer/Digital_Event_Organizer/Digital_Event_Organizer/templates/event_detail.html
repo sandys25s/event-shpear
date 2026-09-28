@@ -1,0 +1,271 @@
+{% extends "base.html" %}
+
+{% block title %}{{ event.title }} - EventOrg{% endblock %}
+
+{% block content %}
+<div class="row animate-fade">
+    <!-- Left Column: Banner, Details, Agenda, Reviews -->
+    <div class="col-lg-8 mb-4">
+        <div class="glass-card overflow-hidden mb-4">
+            <div class="position-relative">
+                <img src="{{ event.image_url or '/static/placeholder.png' }}"
+                     onerror="this.onerror=null; this.src='/static/placeholder.png';"
+                     alt="{{ event.title }}"
+                     class="img-fluid w-100" style="max-height: 420px; object-fit: cover;">
+                <div class="position-absolute top-0 end-0 m-3">
+                    <span class="badge bg-primary rounded-pill px-4 py-2 fs-6 shadow">{{ event.category }}</span>
+                </div>
+                {% if event.status == 'COMPLETED' %}
+                <div class="position-absolute top-0 start-0 m-3">
+                    <span class="badge bg-info rounded-pill px-3 py-2 shadow"><i class="fas fa-flag-checkered me-1"></i>Event Completed</span>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="p-4 p-md-5">
+                <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+                    <h1 class="fw-bold mb-0 text-white">{{ event.title }}</h1>
+                    {% if avg_rating > 0 %}
+                    <div class="d-flex align-items-center gap-2 bg-white bg-opacity-10 px-3 py-2 rounded-pill border border-light border-opacity-25">
+                        <i class="fas fa-star text-warning"></i>
+                        <span class="fw-bold text-white">{{ avg_rating }}</span>
+                        <span class="small opacity-50">({{ review_count }} reviews)</span>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="d-flex flex-wrap gap-4 text-white-50 small mb-4 pb-3 border-bottom border-light border-opacity-10">
+                    <span><i class="fas fa-calendar-alt text-primary me-2"></i>{{ event.date }}</span>
+                    <span><i class="fas fa-clock text-warning me-2"></i>{{ event.time }}{{ (' - ' + event.end_time) if event.end_time else '' }}</span>
+                    <span><i class="fas fa-map-marker-alt text-danger me-2"></i>{{ event.venue }}{{ (', ' + event.city) if event.city else '' }}</span>
+                </div>
+
+                <!-- Event Description -->
+                <h5 class="fw-bold mb-3">About this Event</h5>
+                <p class="opacity-75 lead mb-5" style="font-size: 1.05rem; line-height: 1.7;">
+                    {{ event.description }}
+                </p>
+
+                <!-- Key Details Grid -->
+                <div class="row g-3 mb-4">
+                    <div class="col-sm-6">
+                        <div class="p-3 bg-white bg-opacity-5 rounded-4 h-100 border border-light border-opacity-10">
+                            <span class="opacity-50 small text-uppercase fw-semibold d-block mb-1">Venue & Location</span>
+                            <p class="fw-bold mb-0 text-white">{{ event.venue }}</p>
+                            {% if event.address %}<p class="small opacity-75 mb-0">{{ event.address }}</p>{% endif %}
+                            {% if event.city %}<p class="small opacity-75 mb-0">{{ event.city }}</p>{% endif %}
+                        </div>
+                    </div>
+
+                    <div class="col-sm-6">
+                        <div class="p-3 bg-white bg-opacity-5 rounded-4 h-100 border border-light border-opacity-10">
+                            <span class="opacity-50 small text-uppercase fw-semibold d-block mb-1">Organizer & Contact</span>
+                            <p class="fw-bold mb-0 text-white">{{ event.organizer_name or 'Faculty Coordinator' }}</p>
+                            {% if event.contact_email %}<p class="small opacity-75 mb-0"><i class="fas fa-envelope me-1"></i>{{ event.contact_email }}</p>{% endif %}
+                            {% if event.contact_phone %}<p class="small opacity-75 mb-0"><i class="fas fa-phone me-1"></i>{{ event.contact_phone }}</p>{% endif %}
+                        </div>
+                    </div>
+
+                    {% if event.requirements %}
+                    <div class="col-12">
+                        <div class="p-3 bg-white bg-opacity-5 rounded-4 border border-light border-opacity-10">
+                            <span class="opacity-50 small text-uppercase fw-semibold d-block mb-1"><i class="fas fa-clipboard-list me-1 text-warning"></i>Attendee Requirements</span>
+                            <p class="small mb-0 opacity-75">{{ event.requirements }}</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Add to Calendar Buttons -->
+                <div class="p-3 rounded-4 bg-white bg-opacity-5 border border-light border-opacity-10 d-flex flex-wrap justify-content-between align-items-center gap-3">
+                    <div>
+                        <strong class="d-block text-white"><i class="fas fa-calendar-plus text-primary me-2"></i>Add to Personal Calendar</strong>
+                        <span class="small opacity-50">Sync schedule with Google Calendar or download standard .ics file.</span>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <a href="{{ google_cal_url }}" target="_blank" class="btn btn-sm btn-glass">
+                            <i class="fab fa-google me-1 text-danger"></i> Google Calendar
+                        </a>
+                        <a href="/event/{{ event.event_id }}/calendar.ics" class="btn btn-sm btn-outline-light">
+                            <i class="fas fa-file-download me-1"></i> .ICS File
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Event Reviews & Ratings Section -->
+        <div class="glass-card p-4 p-md-5">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h4 class="fw-bold mb-0"><i class="fas fa-comments text-warning me-2"></i>Attendee Reviews</h4>
+                {% if review_count > 0 %}
+                <span class="badge bg-warning bg-opacity-25 text-warning rounded-pill px-3 py-1">
+                    {{ avg_rating }} / 5.0 ({{ review_count }})
+                </span>
+                {% endif %}
+            </div>
+
+            <!-- Review Submission Form (Only if attended) -->
+            {% if can_review %}
+            <div class="p-4 rounded-4 bg-white bg-opacity-5 border border-light border-opacity-10 mb-4">
+                <h6 class="fw-bold mb-2 text-gradient">Leave Your Feedback</h6>
+                <p class="small opacity-50 mb-3">Since you attended this event, your feedback helps organizers improve future sessions.</p>
+                <form action="/event/{{ event.event_id }}/review" method="POST">
+                    <div class="mb-3">
+                        <label class="form-label small opacity-75">Rating (1 to 5 Stars)</label>
+                        <select name="rating" class="form-select glass-input" required style="max-width: 200px;">
+                            <option value="5">⭐⭐⭐⭐⭐ (5 - Outstanding)</option>
+                            <option value="4">⭐⭐⭐⭐ (4 - Very Good)</option>
+                            <option value="3">⭐⭐⭐ (3 - Average)</option>
+                            <option value="2">⭐⭐ (2 - Below Expectations)</option>
+                            <option value="1">⭐ (1 - Poor)</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small opacity-75">Your Comment</label>
+                        <textarea name="comment" class="form-control glass-input" rows="3" placeholder="Share your experience, highlights, or suggestions..." required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-sm px-4 fw-semibold">Submit Review</button>
+                </form>
+            </div>
+            {% elif existing_review %}
+            <div class="p-3 rounded-3 bg-success bg-opacity-10 border border-success border-opacity-25 mb-4 small text-success">
+                <i class="fas fa-check-circle me-1"></i> You have already reviewed this event (Rating: {{ existing_review.rating }}/5 stars).
+            </div>
+            {% elif user_reg and user_reg.status != 'ATTENDED' %}
+            <div class="p-3 rounded-3 bg-white bg-opacity-5 border border-light border-opacity-10 mb-4 small opacity-75">
+                <i class="fas fa-info-circle me-1"></i> Reviews are unlocked once the organizer marks your attendance at the venue.
+            </div>
+            {% endif %}
+
+            <!-- Reviews List -->
+            <div class="d-flex flex-column gap-3">
+                {% for r in reviews %}
+                <div class="p-3 rounded-4 bg-white bg-opacity-5 border border-light border-opacity-10">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="rounded-circle bg-primary bg-opacity-25 d-flex align-items-center justify-content-center text-white fw-bold" style="width: 32px; height: 32px;">
+                                {{ r.user_name[:1]|upper }}
+                            </div>
+                            <strong class="text-white small">{{ r.user_name }}</strong>
+                        </div>
+                        <div class="text-warning small">
+                            {% for i in range(r.rating) %}<i class="fas fa-star"></i>{% endfor %}
+                            {% for i in range(5 - r.rating) %}<i class="far fa-star opacity-25"></i>{% endfor %}
+                        </div>
+                    </div>
+                    <p class="small opacity-75 mb-1">{{ r.comment }}</p>
+                    <span class="x-small opacity-50">{{ r.created_at[:10] if r.created_at else '' }}</span>
+                </div>
+                {% else %}
+                <p class="text-center opacity-50 small py-4 mb-0">No reviews submitted yet for this event.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Registration Card & Capacity Counter -->
+    <div class="col-lg-4">
+        <div class="glass-card p-4 sticky-top" style="top: 90px;">
+            <h4 class="fw-bold mb-3">Event Registration</h4>
+
+            <!-- Pricing -->
+            <div class="d-flex justify-content-between align-items-baseline mb-3 pb-3 border-bottom border-light border-opacity-10">
+                <span class="opacity-75">Ticket Price</span>
+                <span class="fw-bold fs-4 text-gradient">
+                    {{ ("Rs. " + event.price|string) if event.is_paid else "Free" }}
+                </span>
+            </div>
+
+            <!-- Capacity Progress Indicator -->
+            <div class="mb-4">
+                {% set seats_left = event.max_participants - event.current_participants %}
+                <div class="d-flex justify-content-between small mb-1">
+                    <span class="opacity-75">Seat Availability</span>
+                    <span class="fw-bold {{ 'text-danger' if seats_left <= 0 else ('text-warning' if seats_left <= 10 else 'text-success') }}">
+                        {% if seats_left <= 0 %}Event Full (0 left){% else %}{{ seats_left }} seats left{% endif %}
+                    </span>
+                </div>
+                <div class="progress mb-2" style="height: 8px; background: rgba(255,255,255,0.1);">
+                    {% set pct = (event.current_participants / event.max_participants * 100) if event.max_participants > 0 else 0 %}
+                    <div class="progress-bar bg-primary" style="width: {{ pct }}%;"></div>
+                </div>
+                <span class="x-small opacity-50 d-block text-end">
+                    {{ event.current_participants }} registered / {{ event.max_participants }} max
+                </span>
+            </div>
+
+            <div class="small opacity-75 mb-4">
+                <i class="fas fa-clock text-warning me-1"></i> Registration deadline:<br>
+                <strong class="text-white">{{ event.deadline }}</strong>
+            </div>
+
+            <hr class="opacity-25 mb-4">
+
+            <!-- Registration Action Buttons -->
+            {% if session.get('user_id') %}
+                {% if user_reg %}
+                    {% if user_reg.status == 'WAITLISTED' %}
+                        <div class="alert alert-warning glass-card border-0 text-center mb-3">
+                            <i class="fas fa-hourglass-half fa-2x mb-2 d-block text-warning"></i>
+                            <h6 class="fw-bold mb-1">You are on the Waitlist</h6>
+                            <p class="small mb-0">If an attendee cancels, you will automatically be promoted to confirmed!</p>
+                        </div>
+                        <form action="/cancel_registration/{{ user_reg.registration_id }}" method="POST" onsubmit="return confirm('Leave waitlist?');">
+                            <button type="submit" class="btn btn-outline-danger btn-sm w-100">Leave Waitlist</button>
+                        </form>
+                    {% else %}
+                        <div class="alert alert-success glass-card border-0 text-center mb-3">
+                            <i class="fas fa-check-circle fa-2x mb-2 d-block text-success"></i>
+                            <h6 class="fw-bold mb-1">Registration Confirmed</h6>
+                            <p class="small mb-0">Status: <span class="badge bg-success">{{ user_reg.status }}</span></p>
+                        </div>
+                        {% if user_reg.ticket_code %}
+                        <a href="/ticket/{{ user_reg.ticket_code }}" class="btn btn-glass w-100 py-3 mb-2 fw-bold text-gradient">
+                            <i class="fas fa-qrcode me-2"></i> View Digital Ticket
+                        </a>
+                        {% endif %}
+                        <form action="/cancel_registration/{{ user_reg.registration_id }}" method="POST" onsubmit="return confirm('Are you sure you want to cancel your registration?');">
+                            <button type="submit" class="btn btn-outline-danger btn-sm w-100">Cancel Registration</button>
+                        </form>
+                    {% endif %}
+                {% elif event.status == 'COMPLETED' %}
+                    <div class="text-center p-3 bg-white bg-opacity-5 rounded-3">
+                        <i class="fas fa-calendar-times fa-2x mb-2 opacity-50"></i>
+                        <p class="small opacity-50 mb-0">This event has already ended.</p>
+                    </div>
+                {% elif event.current_participants >= event.max_participants %}
+                    <div class="text-center mb-3">
+                        <span class="badge bg-warning text-dark px-3 py-2 rounded-pill fw-bold w-100">
+                            <i class="fas fa-exclamation-triangle me-1"></i> Event at Max Capacity
+                        </span>
+                    </div>
+                    <form action="/register_event/{{ event.event_id }}" method="POST">
+                        <button type="submit" class="btn btn-warning w-100 py-3 fw-bold shadow">
+                            <i class="fas fa-hourglass-half me-2"></i> Join Waitlist
+                        </button>
+                    </form>
+                    <p class="x-small opacity-50 text-center mt-2 mb-0">You'll receive instant notification when a seat opens.</p>
+                {% else %}
+                    <!-- Open for Registration -->
+                    <form action="/register_event/{{ event.event_id }}" method="POST">
+                        <button type="submit" class="btn btn-primary w-100 py-3 fw-bold shadow-lg">
+                            {{ "Proceed to Payment & Register" if event.is_paid else "Register Now (Free)" }}
+                            <i class="fas fa-arrow-right ms-2"></i>
+                        </button>
+                    </form>
+                    <p class="x-small opacity-50 text-center mt-2 mb-0">Instant QR ticket issued upon confirmation.</p>
+                {% endif %}
+            {% else %}
+                <div class="text-center p-3 bg-white bg-opacity-5 rounded-4">
+                    <p class="small opacity-75 mb-3">Please sign in to your EventOrg account to register.</p>
+                    <a href="/login?next=/event/{{ event.event_id }}" class="btn btn-glass w-100 py-2 fw-semibold">
+                        Log In to Register
+                    </a>
+                    <a href="/register" class="small text-white opacity-50 d-block mt-2">New here? Create account &rarr;</a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

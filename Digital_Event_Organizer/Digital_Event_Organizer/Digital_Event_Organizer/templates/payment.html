@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block title %}Checkout & Payment - {{ event.title }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center align-items-center min-vh-75 animate-fade py-4">
+    <div class="col-md-7 col-lg-5">
+        <div class="glass-card p-4 p-md-5">
+            <div class="text-center mb-4">
+                {% if gateway_info and gateway_info.configured %}
+                <span class="badge bg-success bg-opacity-25 text-success p-2 px-3 rounded-pill mb-3">
+                    <i class="fas fa-lock me-1"></i> Live Gateway: {{ gateway_info.provider|capitalize }}
+                </span>
+                {% else %}
+                <span class="badge bg-warning bg-opacity-25 text-warning p-2 px-3 rounded-pill mb-3">
+                    <i class="fas fa-vial me-1"></i> EventOrg Sandbox Test Mode
+                </span>
+                {% endif %}
+                <h2 class="fw-bold mb-1">Complete <span class="text-gradient">Payment</span></h2>
+                <p class="opacity-75 small mb-2">{{ event.title }}</p>
+                <h3 class="fw-bold text-white mb-0">Rs. {{ event.price }}</h3>
+            </div>
+
+            <!-- Payment Method Tabs -->
+            <ul class="nav nav-pills mb-4 justify-content-center gap-2" id="paymentTab" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active btn-glass rounded-pill px-4" id="card-tab" data-bs-toggle="tab" data-bs-target="#card" type="button" role="tab">
+                        <i class="fas fa-credit-card me-2"></i> Card
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link btn-glass rounded-pill px-4" id="upi-tab" data-bs-toggle="tab" data-bs-target="#upi" type="button" role="tab">
+                        <i class="fas fa-qrcode me-2"></i> UPI
+                    </button>
+                </li>
+            </ul>
+
+            <form method="POST">
+                <input type="hidden" name="payment_method" id="selectedPaymentMethod" value="card">
+
+                <div class="tab-content" id="paymentTabContent">
+                    <!-- Card Payment Form -->
+                    <div class="tab-pane fade show active" id="card" role="tabpanel">
+                        <div class="mb-3">
+                            <label class="form-label small opacity-75">Card Number</label>
+                            <div class="input-group">
+                                <span class="input-group-text glass-input border-end-0 bg-transparent text-white"><i class="fas fa-credit-card"></i></span>
+                                <input type="text" class="form-control glass-input border-start-0 ps-0 font-monospace" placeholder="4242 4242 4242 4242" value="4242 4242 4242 4242" required>
+                            </div>
+                        </div>
+                        <div class="row mb-4">
+                            <div class="col-6">
+                                <label class="form-label small opacity-75">Expiry Date</label>
+                                <input type="text" class="form-control glass-input font-monospace" placeholder="MM/YY" value="12/28" required>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label small opacity-75">CVV</label>
+                                <input type="password" class="form-control glass-input font-monospace" placeholder="***" value="123" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- UPI Payment Form -->
+                    <div class="tab-pane fade" id="upi" role="tabpanel">
+                        <div class="text-center mb-4">
+                            <div class="p-2 bg-white rounded-4 d-inline-block mb-3 shadow">
+                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=mock@upi&pn=EventOrg&am={{ event.price }}&cu=INR" alt="UPI QR Code" class="img-fluid rounded-3" style="width: 140px; height: 140px;">
+                            </div>
+                            <p class="small opacity-75 mb-3">Scan with PhonePe, Google Pay, or Paytm</p>
+                            <div class="text-start mb-2">
+                                <label class="form-label small opacity-75">Or UPI ID</label>
+                                <div class="input-group">
+                                    <span class="input-group-text glass-input border-end-0 bg-transparent text-white">@</span>
+                                    <input type="text" class="form-control glass-input border-start-0 ps-0" placeholder="user@okhdfcbank" value="student@okaxis">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {% if gateway_info and not gateway_info.configured %}
+                <div class="p-3 bg-white bg-opacity-5 rounded-3 mb-4 small opacity-75 border border-light border-opacity-10">
+                    <i class="fas fa-info-circle text-info me-1"></i>
+                    <strong>Sandbox Mode:</strong> Real transaction simulated with generated transaction ID. Configure <code>STRIPE_SECRET_KEY</code> or <code>RAZORPAY_KEY_ID</code> for live gateways.
+                </div>
+                {% endif %}
+
+                <button type="submit" class="btn btn-primary w-100 py-3 mb-3 fw-bold shadow">
+                    Pay Rs. {{ event.price }} & Confirm
+                </button>
+
+                <div class="d-flex justify-content-center align-items-center gap-2 opacity-50 small">
+                    <i class="fas fa-lock text-success"></i>
+                    <span>256-bit encrypted checkout session</span>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const cardTab = document.getElementById('card-tab');
+    const upiTab = document.getElementById('upi-tab');
+    const methodInput = document.getElementById('selectedPaymentMethod');
+
+    if (cardTab && upiTab && methodInput) {
+        cardTab.addEventListener('click', () => { methodInput.value = 'card'; });
+        upiTab.addEventListener('click', () => { methodInput.value = 'upi'; });
+    }
+});
+</script>
+{% endblock %}

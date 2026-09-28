@@ -1,0 +1,268 @@
+{% extends "base.html" %}
+
+{% block title %}QR Ticket Check-In - EventOrg{% endblock %}
+
+{% block head %}
+<!-- HTML5 QR Code Scanner Library -->
+<script src="https://unpkg.com/html5-qrcode"></script>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4 align-items-center animate-fade">
+    <div class="col-md-7">
+        <h2 class="fw-bold mb-1">
+            <i class="fas fa-qrcode text-warning me-2"></i>Live Ticket <span class="text-gradient">Check-In</span>
+        </h2>
+        <p class="opacity-75 mb-0">Scan attendee QR code or enter ticket code to record live attendance.</p>
+    </div>
+    <div class="col-md-5 text-md-end mt-3 mt-md-0">
+        <a href="/organizer/dashboard" class="btn btn-outline-light btn-sm px-3 py-2">
+            <i class="fas fa-arrow-left me-1"></i> Dashboard
+        </a>
+    </div>
+</div>
+
+<div class="row g-4 animate-fade">
+    <!-- Scanner & Manual Entry Column -->
+    <div class="col-lg-7">
+        <div class="glass-card p-4 mb-4">
+            <!-- Event Selection Filter -->
+            <div class="mb-4">
+                <label class="form-label small fw-semibold opacity-75">Target Event</label>
+                <select id="targetEventSelect" class="form-select glass-input">
+                    <option value="">-- Verify against Any of My Events --</option>
+                    {% for ev in events %}
+                    <option value="{{ ev.event_id }}" {{ 'selected' if selected_event and selected_event.event_id == ev.event_id else '' }}>
+                        {{ ev.title }} ({{ ev.date }})
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Camera QR Scanner Viewport -->
+            <div class="mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="small fw-semibold opacity-75"><i class="fas fa-camera me-1"></i>Camera QR Scanner</span>
+                    <button id="toggleScannerBtn" class="btn btn-sm btn-glass px-3">
+                        <i class="fas fa-video me-1"></i> Start Camera
+                    </button>
+                </div>
+                
+                <div id="reader-container" class="rounded-4 overflow-hidden border border-light border-opacity-10 bg-black bg-opacity-40 p-2 position-relative" style="min-height: 280px; display: flex; align-items: center; justify-content: center;">
+                    <div id="reader" style="width: 100%;"></div>
+                    <div id="scannerPlaceholder" class="text-center p-4">
+                        <i class="fas fa-qrcode fa-4x mb-3 text-secondary opacity-50"></i>
+                        <p class="small opacity-50 mb-0">Click "Start Camera" above to scan attendee tickets.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center my-3 position-relative">
+                <hr class="opacity-25">
+                <span class="position-absolute top-50 start-50 translate-middle px-3 bg-dark small opacity-75">OR MANUAL INPUT</span>
+            </div>
+
+            <!-- Manual Ticket Code Entry Form -->
+            <form id="manualCheckinForm" class="mt-4">
+                <label class="form-label small fw-semibold opacity-75">Enter Ticket Code</label>
+                <div class="input-group">
+                    <span class="input-group-text glass-input border-end-0 text-white"><i class="fas fa-barcode"></i></span>
+                    <input type="text" id="manualTicketCode" class="form-control glass-input font-monospace text-uppercase" placeholder="e.g. TKT-001-002-A1B2C3" required>
+                    <button type="submit" class="btn btn-primary px-4 fw-semibold" id="verifyBtn">
+                        <i class="fas fa-check-circle me-1"></i> Check In
+                    </button>
+                </div>
+                <div class="form-text opacity-50 small">Case-insensitive. Scans can also parse raw QR payload.</div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Live Check-In Result Column -->
+    <div class="col-lg-5">
+        <div class="glass-card p-4 h-100">
+            <h5 class="fw-bold mb-3"><i class="fas fa-history text-info me-2"></i>Verification Result</h5>
+            
+            <div id="resultBox" class="p-4 rounded-4 text-center border border-light border-opacity-10 bg-white bg-opacity-5 mb-4" style="min-height: 220px; display: flex; flex-column: column; align-items: center; justify-content: center;">
+                <div id="resultDefault">
+                    <i class="fas fa-id-card-alt fa-3x mb-3 opacity-25"></i>
+                    <p class="small opacity-50 mb-0">Scan a ticket QR or enter a ticket ID to see real-time verification status here.</p>
+                </div>
+
+                <div id="resultContent" style="display: none; width: 100%;">
+                    <!-- Rendered dynamically -->
+                </div>
+            </div>
+
+            <!-- Recent Check-In Feed -->
+            <h6 class="fw-semibold small opacity-75 mb-3 text-uppercase">Recent Scan Log</h6>
+            <div id="scanLogList" class="d-flex flex-column gap-2" style="max-height: 240px; overflow-y: auto;">
+                <p class="small opacity-50 text-center py-3 mb-0" id="emptyLogNotice">No scans recorded in this session.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    let html5QrCode = null;
+    let isScanning = false;
+    const toggleBtn = document.getElementById('toggleScannerBtn');
+    const placeholder = document.getElementById('scannerPlaceholder');
+    const resultBox = document.getElementById('resultBox');
+    const resultDefault = document.getElementById('resultDefault');
+    const resultContent = document.getElementById('resultContent');
+    const manualForm = document.getElementById('manualCheckinForm');
+    const manualInput = document.getElementById('manualTicketCode');
+    const targetSelect = document.getElementById('targetEventSelect');
+    const scanLogList = document.getElementById('scanLogList');
+    const emptyLogNotice = document.getElementById('emptyLogNotice');
+
+    // Handle Check-in Verification API
+    function processTicket(code) {
+        if (!code) return;
+        
+        const payload = {
+            ticket_code: code.trim(),
+            event_id: targetSelect.value || null
+        };
+
+        resultDefault.style.display = 'none';
+        resultContent.style.display = 'block';
+        resultContent.innerHTML = `
+            <div class="spinner-border text-primary spinner-border-sm mb-2" role="status"></div>
+            <p class="small opacity-75 mb-0">Verifying ticket ${code}...</p>
+        `;
+
+        fetch('/api/checkin/verify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+        .then(res => res.json())
+        .then(res => {
+            if (res.success) {
+                // Success: Green
+                resultBox.className = "p-4 rounded-4 text-center border border-success bg-success bg-opacity-10 mb-4";
+                resultContent.innerHTML = `
+                    <div class="p-2 rounded-circle bg-success bg-opacity-25 d-inline-block text-success mb-2">
+                        <i class="fas fa-check fa-2x"></i>
+                    </div>
+                    <h5 class="fw-bold text-success mb-1">✓ Check-in Successful</h5>
+                    <h6 class="fw-bold text-white mb-1">${res.attendee}</h6>
+                    <p class="small opacity-75 mb-1">${res.event}</p>
+                    <span class="badge bg-success bg-opacity-25 text-white rounded-pill px-3 py-1 font-monospace small">
+                        ${res.timestamp}
+                    </span>
+                `;
+                appendScanLog(res.attendee, res.event, res.timestamp, 'success');
+            } else if (res.already_checked_in) {
+                // Warning: Yellow
+                resultBox.className = "p-4 rounded-4 text-center border border-warning bg-warning bg-opacity-10 mb-4";
+                resultContent.innerHTML = `
+                    <div class="p-2 rounded-circle bg-warning bg-opacity-25 d-inline-block text-warning mb-2">
+                        <i class="fas fa-exclamation-triangle fa-2x"></i>
+                    </div>
+                    <h5 class="fw-bold text-warning mb-1">⚠ Already Checked In</h5>
+                    <h6 class="fw-bold text-white mb-1">${res.attendee || 'Attendee'}</h6>
+                    <p class="small opacity-75 mb-1">${res.event || ''}</p>
+                    <p class="small text-warning mb-0">${res.message}</p>
+                `;
+                appendScanLog(res.attendee || code, res.event || 'Duplicate scan', 'Duplicate', 'warning');
+            } else {
+                // Error: Red
+                resultBox.className = "p-4 rounded-4 text-center border border-danger bg-danger bg-opacity-10 mb-4";
+                resultContent.innerHTML = `
+                    <div class="p-2 rounded-circle bg-danger bg-opacity-25 d-inline-block text-danger mb-2">
+                        <i class="fas fa-times fa-2x"></i>
+                    </div>
+                    <h5 class="fw-bold text-danger mb-1">✗ Verification Failed</h5>
+                    <p class="small opacity-75 mb-0">${res.message}</p>
+                `;
+                appendScanLog(code, res.message, 'Failed', 'danger');
+            }
+        })
+        .catch(err => {
+            resultBox.className = "p-4 rounded-4 text-center border border-danger bg-danger bg-opacity-10 mb-4";
+            resultContent.innerHTML = `
+                <div class="text-danger mb-2"><i class="fas fa-wifi fa-2x"></i></div>
+                <h6 class="fw-bold text-danger">Connection Error</h6>
+                <p class="small opacity-75 mb-0">${err.message}</p>
+            `;
+        });
+    }
+
+    function appendScanLog(name, eventTitle, time, statusClass) {
+        if (emptyLogNotice) emptyLogNotice.style.display = 'none';
+        const item = document.createElement('div');
+        item.className = `p-2 px-3 rounded-3 bg-white bg-opacity-5 border border-${statusClass} border-opacity-25 d-flex justify-content-between align-items-center small`;
+        item.innerHTML = `
+            <div>
+                <strong class="d-block text-white">${name}</strong>
+                <span class="x-small opacity-50">${eventTitle}</span>
+            </div>
+            <span class="badge bg-${statusClass} bg-opacity-25 text-white">${time}</span>
+        `;
+        scanLogList.prepend(item);
+    }
+
+    // Manual Submit
+    manualForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const code = manualInput.value.trim();
+        if (code) {
+            processTicket(code);
+            manualInput.value = '';
+        }
+    });
+
+    // Camera Toggle
+    toggleBtn.addEventListener('click', () => {
+        if (!isScanning) {
+            startCamera();
+        } else {
+            stopCamera();
+        }
+    });
+
+    function startCamera() {
+        if (typeof Html5Qrcode === "undefined") {
+            alert("QR Scanner library is loading. Please try again in a moment.");
+            return;
+        }
+
+        html5QrCode = new Html5Qrcode("reader");
+        const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+
+        html5QrCode.start({ facingMode: "environment" }, config, (decodedText) => {
+            console.log("QR Decoded:", decodedText);
+            processTicket(decodedText);
+            // Flash feedback sound/vibrate if supported
+            if (navigator.vibrate) navigator.vibrate(100);
+        })
+        .then(() => {
+            isScanning = true;
+            placeholder.style.display = 'none';
+            toggleBtn.innerHTML = '<i class="fas fa-stop me-1"></i> Stop Camera';
+            toggleBtn.className = 'btn btn-sm btn-danger px-3';
+        })
+        .catch(err => {
+            console.error("Camera start error:", err);
+            alert("Unable to access camera: " + err);
+        });
+    }
+
+    function stopCamera() {
+        if (html5QrCode && isScanning) {
+            html5QrCode.stop().then(() => {
+                isScanning = false;
+                placeholder.style.display = 'block';
+                toggleBtn.innerHTML = '<i class="fas fa-video me-1"></i> Start Camera';
+                toggleBtn.className = 'btn btn-sm btn-glass px-3';
+            });
+        }
+    }
+});
+</script>
+{% endblock %}
